@@ -732,6 +732,7 @@ function App() {
                           asignaturasAgregadas.length > 0 && (
                             <ScrollContainer
                               style={{
+                                marginTop: 15,
                                 padding: "10px 0",
                                 borderRadius: 4,
                                 border: `1px solid ${deepPurple[600]} `,

@@ -1152,7 +1152,9 @@ function App() {
                                         InputLabelProps={{ required: false }}
                                         variant="outlined"
                                         label="Seleccionados"
-                                        helperText={`Cargos a cubrir: ${cantidadCargos}`}
+                                        helperText={`Cargos a cubrir: ${
+                                          cantidadCargos || ""
+                                        }`}
                                       />
                                     )}
                                   />

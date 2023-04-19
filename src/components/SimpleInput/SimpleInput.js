@@ -31,6 +31,7 @@ const SimpleInput = ({
         placeholder={placeholder}
         {...rest}
         sx={{ width: 300 }}
+        style={{ minWidth: 300 }}
       />
       {tooltip && <FieldTooltip title={tooltip} />}
     </span>

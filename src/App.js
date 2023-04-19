@@ -41,6 +41,7 @@ import {
   Typography,
   Container,
   Button,
+  Grid,
 } from "@mui/material";
 
 /* Custom Components */
@@ -52,6 +53,7 @@ import Swal from "sweetalert2";
 /* Horizontal Scroll */
 import ScrollContainer from "react-indiana-drag-scroll";
 import SimpleInput from "./components/SimpleInput/SimpleInput";
+import axios from "axios";
 
 /* set Timezone */
 setDefaultOptions({ locale: es });
@@ -77,31 +79,6 @@ function App() {
     formState: { errors },
   } = useForm();
 
-  const [globalFormObject, setGlobalFormObject] = useState({
-    ordenPrelacion: "",
-    fechaPublicacion: "",
-    fechaCierre: "",
-    fechaSustanciado: "",
-    fechaDesignacion: "",
-    fechaPaseArchivo: "",
-    departamento: null,
-    area: null,
-    convenio: null,
-    cargo: null,
-    dedicacion: null,
-    cantidadCargos: null,
-    oca: null,
-    expedienteLlamado: "",
-    expedienteConcurso: "",
-    recusaciones: "",
-    investigacion: "",
-    interino: "",
-    sustanciado: null,
-    ocaDesignacion: "",
-    observaciones: "",
-    disidencia: null,
-  });
-
   const [mostrarFechaSustanciado, setMostrarFechaSustanciado] = useState(false);
   const [conExtension, setConExtension] = useState(false);
   const [dictamenDisidencia, setDictamenDisidencia] = useState(false);
@@ -116,6 +93,9 @@ function App() {
 
   const [fechaPublicacion, setFechaPublicacion] = useState();
   const [fechaCierre, setFechaCierre] = useState();
+  const [fechaSustanciado, setFechaSustanciado] = useState();
+  const [fechaDesignacion, setFechaDesignacion] = useState();
+  const [fechaPaseArchivo, setFechaPaseArchivo] = useState();
 
   const [asignaturasAgregadas, setAsignaturasAgregadas] = useState([]);
   const [seleccionadosAgregados, setSeleccionadosAgregados] = useState([]);
@@ -385,44 +365,54 @@ function App() {
   /* Finalizar Formulario */
   const handleFinalizarFormulario = (data) => {
     setIsLoading(true);
-    console.log(data);
-    console.log("Asignaturas:", asignaturasAgregadas);
-    console.log("fecha de publicacion: ", fechaPublicacion);
+    //console.log(data);
 
-    /*   data &&
-      setGlobalFormObject({
-        ordenPrelacion: data.ordenPrelacion,
-        fechaPublicacion: data.fechaPublicacion,
-        fechaCierre: data.fechaCierre,
-        fechaSustanciado: data.fechaSustanciado,
-        fechaDesignacion: data.fechaDesignacion,
-        fechaPaseArchivo: data.fechaPaseArchivo,
-        departamento: data["departamento"].id,
-        area: data.area,
-        convenio: data.convenio,
-        cargo: data.cargo,
-        dedicacion: data.dedicacion,
-        cantidadCargos: data.cantidadCargos,
-        oca: data.oca,
-        expedienteLlamado: data.expedienteLlamado,
-        expedienteConcurso: data.expedienteConcurso,
-        recusaciones: data.recusaciones,
-        investigacion: data.investigacion,
-        interino: data.interino,
-        sustanciado: data.sustanciado,
-        ocaDesignacion: data.ocaDesignacion,
-        observaciones: data.observaciones,
-        disidencia: data.disidencia,
+    const draft = {
+      ordenPrelacion: data.ordenPrelacion,
+      departamento: data["departamento"].id,
+      area: data.area,
+      cargo: data.cargo,
+      asignaturas: asignaturasAgregadas,
+      cantidadCargos: data.cantidadCargos,
+      fechaPublicacion: data.fechaPublicacion,
+      expedienteLlamado: data.expedienteLlamado,
+      dedicacion: data.dedicacion,
+      oca: data.oca,
+      fechaCierre: data.fechaCierre,
+      expedienteConcurso: data.expedienteConcurso,
+      interino: data.interino,
+      postulantes: postulantesAgregados.map((item) => item.postulante),
+      comisionAsesora: juradosAgregados.map((item) => item.jurado),
+      seleccionados: seleccionadosAgregados,
+      sustanciado: data.sustanciado,
+      fechaSustanciado: data.fechaSustanciado,
+      recusaciones: data.recusaciones,
+      fechaPaseArchivo: data.fechaPaseArchivo,
+      fechaDesignacion: data.fechaDesignacion,
+      observaciones: data.observaciones,
+      convenio: data.convenio,
+      investigacion: data.investigacion,
+      disidencia: data.disidencia,
+    };
+    axios
+      .post("http://localhost/concursos/API/save_concurso.php", draft)
+      .then((response) => {
+        // handle success
+        console.log(response);
+      })
+      .catch((error) => {
+        // handle error
+        console.log(error);
       });
-    console.table("globalObject: " + globalFormObject); */
 
-    setTimeout(() => {
+    setIsLoading(false);
+    /*  setTimeout(() => {
       localStorage.clear();
       setAsignaturasAgregadas([]);
       setConExtension(false);
       reset({ data });
-      setIsLoading(false);
-    }, 1000);
+     
+    }, 1000); */
   };
 
   useEffect(() => {
@@ -491,8 +481,10 @@ function App() {
             </Container>
           </AppBar>
 
+          {/* BreadCrumbs */}
           <div className="container">
             <Breadcrumbs
+              sx={{ fontSize: 14 }}
               aria-label="breadcrumb"
               style={{ margin: "2em 0 1em 0" }}
             >
@@ -523,107 +515,121 @@ function App() {
             <Card variant="outlined">
               <CardContent>
                 <form
+                  className="d-grid justify-content-center"
                   action=""
                   id="formulario"
                   onSubmit={handleSubmit(handleFinalizarFormulario)}
                 >
-                  <Stack gap={3}>
-                    {/* Orden de Prelación */}
-                    <SimpleInput
-                      label="Orden de Prelación Nº "
-                      placeholder="Ej: 1000"
-                      type="number"
-                      helperText={
-                        errors.ordenPrelacion && "Ingrese el Orden de Prelación"
-                      }
-                      tooltip="Corresponde al Orden de Prelación indicado en el llamado, se ingresa únicamente el número. Ej: 1423"
-                      error={Boolean(errors.ordenPrelacion)}
-                      register={register}
-                      name="ordenPrelacion"
-                      required
-                    />
-
-                    {/* Departamento */}
-                    <span className="d-flex align-items-top gap-3">
-                      <Controller
-                        control={control}
-                        name="departamento"
-                        defaultValue={departamentosData[0]}
-                        render={({ field: { ref, onChange, ...field } }) => (
-                          <Autocomplete
-                            disablePortal
-                            defaultValue={null}
-                            noOptionsText="Sin resultados"
-                            options={departamentosData}
-                            sx={{ width: 300 }}
-                            isOptionEqualToValue={(option, value) =>
-                              option.label === value.label
-                            }
-                            onChange={(_, data) => data && onChange(data.id)}
-                            renderInput={(params) => (
-                              <TextField
-                                {...params}
-                                {...field}
-                                inputRef={ref}
-                                required
-                                error={Boolean(errors.departamento)}
-                                InputLabelProps={{ required: false }}
-                                variant="outlined"
-                                label="Departamento"
+                  <Stack gap={2}>
+                    <div className="row d-flex justify-content-between gap-3 mt-3">
+                      <div className="col-sm-12 col-md-6 col-lg-6 col-xl-4 d-flex flex-column gap-3">
+                        {/* Orden de Prelación */}
+                        <SimpleInput
+                          label="Orden de Prelación Nº "
+                          placeholder="Ej: 1000"
+                          type="number"
+                          helperText={
+                            errors.ordenPrelacion &&
+                            "Ingrese el Orden de Prelación"
+                          }
+                          tooltip="Corresponde al Orden de Prelación indicado en el llamado, se ingresa únicamente el número. Ej: 1423"
+                          error={Boolean(errors.ordenPrelacion)}
+                          register={register}
+                          name="ordenPrelacion"
+                          required
+                        />
+                        {/* Departamento */}
+                        <span className="d-flex align-items-top gap-3">
+                          <Controller
+                            control={control}
+                            name="departamento"
+                            defaultValue={departamentosData[0]}
+                            render={({
+                              field: { ref, onChange, ...field },
+                            }) => (
+                              <Autocomplete
+                                disablePortal
+                                defaultValue={null}
+                                noOptionsText="Sin resultados"
+                                options={departamentosData}
+                                isOptionEqualToValue={(option, value) =>
+                                  option.label === value.label
+                                }
+                                onChange={(_, data) =>
+                                  data && onChange(data.id)
+                                }
+                                renderInput={(params) => (
+                                  <TextField
+                                    {...params}
+                                    {...field}
+                                    inputRef={ref}
+                                    required
+                                    sx={{ minWidth: 300 }}
+                                    error={Boolean(errors.departamento)}
+                                    InputLabelProps={{ required: false }}
+                                    variant="outlined"
+                                    label="Departamento"
+                                  />
+                                )}
                               />
                             )}
                           />
-                        )}
-                      />
-                      <FieldTooltip title="Corresponde al Departamento al cual pertenece la asignatura del concurso. Ej: Departamento de Filosofía" />
-                    </span>
+                          <FieldTooltip title="Corresponde al Departamento al cual pertenece la asignatura del concurso. Ej: Departamento de Filosofía" />
+                        </span>
+                      </div>
+                      <div className="col-sm-12 col-md-6 col-lg-5 d-flex flex-column gap-3 mb-3">
+                        {/* Area */}
+                        <SimpleInput
+                          label="Área"
+                          placeholder="Ej: Área II: Teoría Literaria"
+                          helperText={errors.area && "Ingrese un Área"}
+                          tooltip="Corresponde al Área a la cual pertenece la asignatura del concurso. Se debe ingresar como figura en el llamado. Ej: Área II: Teoría Literaria."
+                          error={Boolean(errors.area)}
+                          register={register}
+                          name="area"
+                          required
+                        />
 
-                    {/* Area */}
-                    <SimpleInput
-                      label="Área"
-                      placeholder="Ej: Área II: Teoría Literaria"
-                      helperText={errors.area && "Ingrese un Área"}
-                      tooltip="Corresponde al Área a la cual pertenece la asignatura del concurso. Se debe ingresar como figura en el llamado. Ej: Área II: Teoría Literaria."
-                      error={Boolean(errors.area)}
-                      register={register}
-                      name="area"
-                      required
-                    />
-
-                    {/* Cargo */}
-                    <span className="d-flex align-items-top gap-3">
-                      <Controller
-                        control={control}
-                        name="cargo"
-                        defaultValue={cargosData[0]}
-                        render={({ field: { ref, onChange, ...field } }) => (
-                          <Autocomplete
-                            disablePortal
-                            defaultValue={null}
-                            noOptionsText="Sin resultados"
-                            options={cargosData}
-                            sx={{ width: 300 }}
-                            isOptionEqualToValue={(option, value) =>
-                              option.label === value.label
-                            }
-                            onChange={(_, data) => data && onChange(data.id)}
-                            renderInput={(params) => (
-                              <TextField
-                                {...params}
-                                {...field}
-                                inputRef={ref}
-                                error={Boolean(errors.cargo)}
-                                required
-                                InputLabelProps={{ required: false }}
-                                variant="outlined"
-                                label="Cargo"
+                        {/* Cargo */}
+                        <span className="d-flex align-items-top gap-3">
+                          <Controller
+                            control={control}
+                            name="cargo"
+                            defaultValue={cargosData[0]}
+                            render={({
+                              field: { ref, onChange, ...field },
+                            }) => (
+                              <Autocomplete
+                                disablePortal
+                                defaultValue={null}
+                                noOptionsText="Sin resultados"
+                                options={cargosData}
+                                sx={{ minWidth: 300 }}
+                                isOptionEqualToValue={(option, value) =>
+                                  option.label === value.label
+                                }
+                                onChange={(_, data) =>
+                                  data && onChange(data.id)
+                                }
+                                renderInput={(params) => (
+                                  <TextField
+                                    {...params}
+                                    {...field}
+                                    inputRef={ref}
+                                    error={Boolean(errors.cargo)}
+                                    required
+                                    InputLabelProps={{ required: false }}
+                                    variant="outlined"
+                                    label="Cargo"
+                                  />
+                                )}
                               />
                             )}
                           />
-                        )}
-                      />
-                      <FieldTooltip title="Corresponde al cargo docente requerido." />
-                    </span>
+                          <FieldTooltip title="Corresponde al cargo docente requerido." />
+                        </span>
+                      </div>
+                    </div>
 
                     {/* Asignatura */}
                     <Card
@@ -781,175 +787,187 @@ function App() {
                       </CardContent>
                     </Card>
 
-                    {/* Cantidad de cargos */}
-                    <SimpleInput
-                      label="Cantidad de Cargos"
-                      placeholder="Máximo: 11"
-                      helperText={
-                        errors.cantidadCargos &&
-                        "Cantidad de cargos mínimo: 1, máximo: 11"
-                      }
-                      tooltip="Se cargan la cantidad de cargos a concursar. Valor por defecto 1, máximo 11."
-                      error={Boolean(errors.cantidadCargos)}
-                      register={register}
-                      name="cantidadCargos"
-                      onChange={(e) => {
-                        const inputValue = parseInt(e.target.value, 10);
-                        const validNumbers = [
-                          1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-                        ];
-                        if (validNumbers.includes(inputValue)) {
-                          setValue("cantidadCargos", inputValue.toString());
-                          clearErrors("cantidadCargos");
-                        } else {
-                          setError("cantidadCargos", {
-                            type: "manual",
-                          });
-                        }
-                      }}
-                      required
-                    />
+                    <div className="row d-flex justify-content-between gap-3 mt-3">
+                      <div className="col-sm-12 col-md-6 col-lg-6 col-xl-4 d-flex flex-column gap-3">
+                        {/* Cantidad de cargos */}
+                        <SimpleInput
+                          label="Cantidad de Cargos"
+                          placeholder="Máximo: 11"
+                          helperText={
+                            errors.cantidadCargos &&
+                            "Cantidad de cargos mínimo: 1, máximo: 11"
+                          }
+                          tooltip="Se cargan la cantidad de cargos a concursar. Valor por defecto 1, máximo 11."
+                          error={Boolean(errors.cantidadCargos)}
+                          register={register}
+                          name="cantidadCargos"
+                          onChange={(e) => {
+                            const inputValue = parseInt(e.target.value, 10);
+                            const validNumbers = [
+                              1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+                            ];
+                            if (validNumbers.includes(inputValue)) {
+                              setValue("cantidadCargos", inputValue.toString());
+                              clearErrors("cantidadCargos");
+                            } else {
+                              setError("cantidadCargos", {
+                                type: "manual",
+                              });
+                            }
+                          }}
+                          required
+                        />
 
-                    {/* Fecha de Publicación */}
-                    <Controller
-                      name="fechaPublicacion"
-                      defaultValue={fechaPublicacion}
-                      control={control}
-                      render={({ field: { onChange, ...restField } }) => (
-                        <LocalizationProvider dateAdapter={AdapterDateFns}>
-                          <DesktopDatePicker
-                            label="Fecha de Publicación"
-                            onChange={(event) => {
-                              onChange(event);
-                              setFechaPublicacion(event);
-                            }}
-                            {...restField}
+                        {/* Fecha de Publicación */}
+                        <span className="d-flex align-items-top gap-3">
+                          <Controller
+                            name="fechaPublicacion"
+                            defaultValue={fechaPublicacion}
+                            control={control}
+                            render={({ field: { onChange, ...restField } }) => (
+                              <LocalizationProvider
+                                dateAdapter={AdapterDateFns}
+                              >
+                                <DesktopDatePicker
+                                  sx={{ minWidth: 300 }}
+                                  label="Fecha de Publicación"
+                                  onChange={(event) => {
+                                    onChange(event);
+                                    setFechaPublicacion(event);
+                                  }}
+                                  {...restField}
+                                />
+                              </LocalizationProvider>
+                            )}
                           />
-                        </LocalizationProvider>
-                      )}
-                    />
+                          <FieldTooltip title="Corresponde a la fecha en la que se publica el llamado." />
+                        </span>
 
-                    {/* Expediente Llamado */}
-                    <SimpleInput
-                      label="Expediente Llamado Nº"
-                      placeholder="Ej: 7-0756/16"
-                      helperText={
-                        errors.expedienteLlamado &&
-                        "Ingrese un N° de expediente"
-                      }
-                      tooltip="Corresponde al N° de expediente administrativo del llamado, se ingresa como figura en el expediente. Ej: 7-3664/14"
-                      error={Boolean(errors.expedienteLlamado)}
-                      register={register}
-                      name="expedienteLlamado"
-                      required
-                    />
+                        {/* Expediente Llamado */}
+                        <SimpleInput
+                          label="Expediente Llamado Nº"
+                          placeholder="Ej: 7-0756/16"
+                          helperText={
+                            errors.expedienteLlamado &&
+                            "Ingrese un N° de expediente"
+                          }
+                          tooltip="Corresponde al N° de expediente administrativo del llamado, se ingresa como figura en el expediente. Ej: 7-3664/14"
+                          error={Boolean(errors.expedienteLlamado)}
+                          register={register}
+                          name="expedienteLlamado"
+                          required
+                        />
 
-                    {/* Dedicación */}
-                    <TextField
-                      select
-                      fullWidth
-                      label="Dedicación"
-                      defaultValue=""
-                      inputProps={register("dedicacion", {
-                        required: "Ingrese una dedicación",
-                      })}
-                      error={Boolean(errors.dedicacion)}
-                      helperText={errors.dedicacion?.message}
-                    >
-                      {[
-                        { label: "Simple", id: "1" },
-                        { label: "Exclusiva", id: "2" },
-                        { label: "Completa", id: "3" },
-                        { label: "Parcial", id: "4" },
-                      ].map((option) => (
-                        <MenuItem key={option.id} value={option.id}>
-                          {option.label}
-                        </MenuItem>
-                      ))}
-                    </TextField>
+                        {/* Dedicación */}
+                        <span className="d-flex align-items-top gap-3 ">
+                          <TextField
+                            select
+                            sx={{ minWidth: 300 }}
+                            label="Dedicación"
+                            defaultValue=""
+                            inputProps={register("dedicacion", {
+                              required: "Ingrese una dedicación",
+                            })}
+                            error={Boolean(errors.dedicacion)}
+                            helperText={errors.dedicacion?.message}
+                          >
+                            {[
+                              { label: "Simple", id: "1" },
+                              { label: "Exclusiva", id: "2" },
+                              { label: "Completa", id: "3" },
+                              { label: "Parcial", id: "4" },
+                            ].map((option) => (
+                              <MenuItem key={option.id} value={option.id}>
+                                {option.label}
+                              </MenuItem>
+                            ))}
+                          </TextField>
+                          <FieldTooltip title="Corresponde a la dedicación requerida." />
+                        </span>
 
-                    {/* Investigación */}
-                    {mostrarInvestigacion !== "1" && (
-                      <TextareaAutosize
-                        disabled={Boolean(!mostrarInvestigacion)}
-                        className="textArea"
-                        placeholder="Investigación"
-                        {...register("investigacion")}
-                        name="investigacion"
-                        style={{
-                          width: 300,
-                          borderRadius: 4,
-                          borderColor: "#c4c4c4",
-                          padding: 15,
-                        }}
-                        minRows={4}
-                      />
-                    )}
+                        {/* Investigación */}
+                        {mostrarInvestigacion &&
+                          mostrarInvestigacion !== "1" && (
+                            <TextareaAutosize
+                              disabled={Boolean(!mostrarInvestigacion)}
+                              className="textArea"
+                              placeholder="Investigación"
+                              {...register("investigacion")}
+                              name="investigacion"
+                              style={{
+                                width: 300,
+                                borderRadius: 4,
+                                borderColor: "#c4c4c4",
+                                padding: 15,
+                              }}
+                              minRows={4}
+                            />
+                          )}
+                      </div>
 
-                    {/* OCA Designacion */}
-                    <SimpleInput
-                      label="OCA Designacion Nº"
-                      placeholder="Ej: 1544/18"
-                      helperText={
-                        errors.OcaDesignacion && "Ingrese un N° de OCA"
-                      }
-                      tooltip="Corresponde al N° de OCA de la designación, se ingresa como figura en la ordenanza. Ej: 2879/15"
-                      error={Boolean(errors.OcaDesignacion)}
-                      register={register}
-                      name="OcaDesignacion"
-                      required
-                    />
+                      <div className="col-sm-12 col-md-6 col-lg-5 d-flex flex-column gap-3 mb-3">
+                        {/* OCA Designacion */}
+                        <SimpleInput
+                          label="OCA Designacion Nº"
+                          placeholder="Ej: 1544/18"
+                          helperText={
+                            errors.OcaDesignacion && "Ingrese un N° de OCA"
+                          }
+                          tooltip="Corresponde al N° de OCA de la designación, se ingresa como figura en la ordenanza. Ej: 2879/15"
+                          error={Boolean(errors.OcaDesignacion)}
+                          register={register}
+                          name="OcaDesignacion"
+                          required
+                        />
 
-                    {/* Fecha de Cierre */}
-                    <Controller
-                      name="fechaCierre"
-                      defaultValue={fechaCierre}
-                      control={control}
-                      render={({ field: { onChange, ...restField } }) => (
-                        <LocalizationProvider dateAdapter={AdapterDateFns}>
-                          <DesktopDatePicker
-                            label="Fecha de Cierre"
-                            onChange={(event) => {
-                              onChange(event);
-                              setFechaCierre(event);
-                            }}
-                            {...restField}
+                        {/* Fecha de Cierre */}
+                        <span className="d-flex align-items-top gap-3">
+                          <Controller
+                            name="fechaCierre"
+                            defaultValue={fechaCierre}
+                            control={control}
+                            render={({ field: { onChange, ...restField } }) => (
+                              <LocalizationProvider
+                                dateAdapter={AdapterDateFns}
+                              >
+                                <DesktopDatePicker
+                                  sx={{ minWidth: 300 }}
+                                  label="Fecha de Cierre"
+                                  onChange={(event) => {
+                                    onChange(event);
+                                    setFechaCierre(event);
+                                  }}
+                                  {...restField}
+                                />
+                              </LocalizationProvider>
+                            )}
                           />
-                        </LocalizationProvider>
-                      )}
-                    />
+                          <FieldTooltip title="Corresponde a la fecha del cierre del concurso." />
+                        </span>
+                        {/* Expediente Concurso  */}
+                        <SimpleInput
+                          label="Expediente de Concurso Nº"
+                          placeholder="Ej: 7-2183/18"
+                          helperText={
+                            errors.expedienteConcurso &&
+                            "Ingrese un N° expediente"
+                          }
+                          tooltip="Corresponde al N° de expediente administrativo del concurso, se ingresa como figura en el expediente. Ej: 7-3664/14"
+                          error={Boolean(errors.expedienteConcurso)}
+                          register={register}
+                          name="expedienteConcurso"
+                        />
 
-                    {/* Expediente Concurso  */}
-                    <SimpleInput
-                      label="Expediente de Concurso Nº"
-                      placeholder="Ej: 7-2183/18"
-                      helperText={
-                        errors.expedienteConcurso && "Ingrese un N° expediente"
-                      }
-                      tooltip="Corresponde al N° de expediente administrativo del concurso, se ingresa como figura en el expediente. Ej: 7-3664/14"
-                      error={Boolean(errors.expedienteConcurso)}
-                      register={register}
-                      name="expedienteConcurso"
-                    />
-
-                    {/* Interino  */}
-                    <SimpleInput
-                      label="Interino"
-                      tooltip="Corresponde completar cuado hay un interino."
-                      error={Boolean(errors.interino)}
-                      register={register}
-                      name="interino"
-                    />
-
-                    {/* Recusaciones  */}
-                    <SimpleInput
-                      label="Recusaciones"
-                      placeholder="Ej: 1544/18"
-                      tooltip="Corresponde completar cuado hay recusaciones o exusaciones de jurados"
-                      error={Boolean(errors.recusaciones)}
-                      register={register}
-                      name="recusaciones"
-                    />
+                        {/* Interino  */}
+                        <SimpleInput
+                          label="Interino"
+                          tooltip="Corresponde completar cuado hay un interino."
+                          error={Boolean(errors.interino)}
+                          register={register}
+                          name="interino"
+                        />
+                      </div>
+                    </div>
 
                     {/* Postulantes */}
                     <Card
@@ -1124,43 +1142,46 @@ function App() {
                             }}
                           >
                             <span className="d-flex gap-3">
-                              <Controller
-                                control={control}
-                                name="seleccionados"
-                                defaultValue={postulantesData[0]}
-                                render={({
-                                  field: { ref, onChange, ...field },
-                                }) => (
-                                  <Autocomplete
-                                    disablePortal
-                                    defaultValue={null}
-                                    noOptionsText="Sin resultados"
-                                    options={postulantesData}
-                                    sx={{ width: 300 }}
-                                    isOptionEqualToValue={(option, value) =>
-                                      option.label === value.label
-                                    }
-                                    onChange={(_, data) =>
-                                      data && onChange(data.label)
-                                    }
-                                    renderInput={(params) => (
-                                      <TextField
-                                        {...params}
-                                        {...field}
-                                        inputRef={ref}
-                                        required
-                                        error={Boolean(errors.seleccionados)}
-                                        InputLabelProps={{ required: false }}
-                                        variant="outlined"
-                                        label="Seleccionados"
-                                        helperText={`Cargos a cubrir: ${
-                                          cantidadCargos || ""
-                                        }`}
-                                      />
-                                    )}
-                                  />
-                                )}
-                              />
+                              <span className="d-flex align-items-top gap-3">
+                                <Controller
+                                  control={control}
+                                  name="seleccionados"
+                                  defaultValue={postulantesData[0]}
+                                  render={({
+                                    field: { ref, onChange, ...field },
+                                  }) => (
+                                    <Autocomplete
+                                      disablePortal
+                                      defaultValue={null}
+                                      noOptionsText="Sin resultados"
+                                      options={postulantesData}
+                                      sx={{ width: 300 }}
+                                      isOptionEqualToValue={(option, value) =>
+                                        option.label === value.label
+                                      }
+                                      onChange={(_, data) =>
+                                        data && onChange(data.label)
+                                      }
+                                      renderInput={(params) => (
+                                        <TextField
+                                          {...params}
+                                          {...field}
+                                          inputRef={ref}
+                                          required
+                                          error={Boolean(errors.seleccionados)}
+                                          InputLabelProps={{ required: false }}
+                                          variant="outlined"
+                                          label="Seleccionados"
+                                          helperText={`Cargos a cubrir: ${
+                                            cantidadCargos || ""
+                                          }`}
+                                        />
+                                      )}
+                                    />
+                                  )}
+                                />
+                                <FieldTooltip title="Corresponde a los candidatos seleccionados. El orden de mérito debe respetarse en la lista, el primero corresponde al primer orden, el segundo al siguiente y así sucesivamente" />
+                              </span>
                               {dictamenDisidencia && (
                                 <>
                                   <Controller
@@ -1221,11 +1242,11 @@ function App() {
                                   backgroundColor: deepPurple[50],
                                   padding: "7.5px 10px",
                                   borderRadius: 4,
+                                  width: 300,
                                   marginTop: 15,
                                   display: "flex",
                                   alignItems: "center",
                                   justifyContent: "space-between",
-                                  width: "fit-content",
                                 }}
                               >
                                 <FormControlLabel
@@ -1330,6 +1351,186 @@ function App() {
                       </CardContent>
                     </Card>
 
+                    {/* Sustanciado - Fecha de Sustanciado */}
+                    <Card
+                      variant="elevation"
+                      elevation={2}
+                      sx={{ maxWidth: 1000 }}
+                    >
+                      <CardContent>
+                        <div id="asignaturaForm">
+                          <div
+                            style={{
+                              border: "1px solid" + deepPurple[400],
+                              borderRadius: 4,
+                              padding: "15px",
+                              margin: 0,
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                alignItems: "center",
+                                justifyContent: "start",
+                                gap: 30,
+                                width: "100%",
+                              }}
+                            >
+                              <span className="d-flex align-items-top gap-3">
+                                <div
+                                  className="col-md-6"
+                                  style={{
+                                    backgroundColor: deepPurple[50],
+                                    padding: "7.5px 10px",
+                                    borderRadius: 4,
+                                    minWidth: 300,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    width: "fit-content",
+                                  }}
+                                >
+                                  <FormControlLabel
+                                    control={
+                                      <Checkbox
+                                        sx={{
+                                          color: deepPurple[800],
+                                          "&.Mui-checked": {
+                                            color: deepPurple[600],
+                                          },
+                                        }}
+                                        onChange={() =>
+                                          setMostrarFechaSustanciado(
+                                            !mostrarFechaSustanciado
+                                          )
+                                        }
+                                        checked={mostrarFechaSustanciado}
+                                      />
+                                    }
+                                    label={"Sustanciado"}
+                                  />
+                                </div>
+                                <FieldTooltip title="Corresponde a la fecha en que se archiva expediente del concurso." />
+                              </span>
+                              {/* Fecha de Sustanciado */}
+                              {mostrarFechaSustanciado && (
+                                <div className="col-md-6">
+                                  <span className="d-flex align-items-top gap-3">
+                                    <Controller
+                                      name="fechaSustanciado"
+                                      control={control}
+                                      render={({
+                                        field: { onChange, ...restField },
+                                      }) => (
+                                        <LocalizationProvider
+                                          dateAdapter={AdapterDateFns}
+                                        >
+                                          <DesktopDatePicker
+                                            sx={{ minWidth: 300 }}
+                                            label="Fecha de Sustanciado"
+                                            onChange={(event) => {
+                                              onChange(event);
+                                              setFechaSustanciado(event);
+                                            }}
+                                            value={fechaSustanciado || ""}
+                                            {...restField}
+                                          />
+                                        </LocalizationProvider>
+                                      )}
+                                    />
+                                    <FieldTooltip title="Corresponde a la fecha en la que se sustanció el concurso." />
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <div className="row d-flex justify-content-between gap-3 mt-3">
+                      <div className="col-sm-12 col-md-6 col-lg-6 col-xl-4 d-flex flex-column gap-3">
+                        {/* Recusaciones  */}
+                        <SimpleInput
+                          label="Recusaciones"
+                          placeholder="Ej: 1544/18"
+                          tooltip="Corresponde completar cuado hay recusaciones o exusaciones de jurados"
+                          error={Boolean(errors.recusaciones)}
+                          register={register}
+                          name="recusaciones"
+                        />
+                        {/* Fecha de Pase a Archivo */}
+                        <span className="d-flex align-items-top gap-3">
+                          <Controller
+                            name="fechaPaseArchivo"
+                            control={control}
+                            render={({ field: { onChange, ...restField } }) => (
+                              <LocalizationProvider
+                                dateAdapter={AdapterDateFns}
+                              >
+                                <DesktopDatePicker
+                                  sx={{ minWidth: 300 }}
+                                  label="Fecha de Pase a Archivo"
+                                  onChange={(event) => {
+                                    onChange(event);
+                                    setFechaPaseArchivo(event);
+                                  }}
+                                  value={fechaPaseArchivo || ""}
+                                  {...restField}
+                                />
+                              </LocalizationProvider>
+                            )}
+                          />
+                          <FieldTooltip title="Corresponde a la fecha en que se archiva expediente del concurso." />
+                        </span>
+                      </div>
+
+                      <div className="col-sm-12 col-md-6 col-lg-5 d-flex flex-column gap-3 mb-3">
+                        {/* Fecha de Designación */}
+                        <span className="d-flex align-items-top gap-3">
+                          <Controller
+                            name="fechaDesignacion"
+                            control={control}
+                            render={({ field: { onChange, ...restField } }) => (
+                              <LocalizationProvider
+                                dateAdapter={AdapterDateFns}
+                              >
+                                <DesktopDatePicker
+                                  sx={{ minWidth: 300 }}
+                                  label="Fecha de Designación"
+                                  onChange={(event) => {
+                                    onChange(event);
+                                    setFechaDesignacion(event);
+                                  }}
+                                  value={fechaDesignacion || ""}
+                                  {...restField}
+                                />
+                              </LocalizationProvider>
+                            )}
+                          />
+                          <FieldTooltip title="Corresponde a la fecha de la designación del docente." />
+                        </span>
+
+                        {/* Observaciones */}
+                        <span className="d-flex align-items-top gap-3">
+                          <TextareaAutosize
+                            className="textArea"
+                            placeholder="Observaciones"
+                            {...register("observaciones")}
+                            name="observaciones"
+                            style={{
+                              minWidth: 300,
+                              borderRadius: 4,
+                              borderColor: "#c4c4c4",
+                              padding: 15,
+                            }}
+                            minRows={3}
+                          />
+                          <FieldTooltip title="Corresponde a otros datos que se consideren necesarios." />
+                        </span>
+                      </div>
+                    </div>
                     {/* Finalizar formulario */}
                     {!isLoading ? (
                       <Button
@@ -1357,185 +1558,8 @@ function App() {
               </CardContent>
             </Card>
           </div>
-
-          <button
-            type="button"
-            className="btn btn-dark m-4"
-            onClick={() => console.log(seleccionadosAgregados)}
-          >
-            PROBAR CAMPOS
-          </button>
         </ThemeProvider>
       </LocalizationProvider>
-      {/* 
-
-
-                
-                <div className="row">
-                  <div className="col">
-                    <div className="labelInput">
-                      <label for="sustanciado"> Sustanciado: </label>
-
-                      <div
-                        style="
-                      background-color: lightgrey;
-                      color: var(--text);
-                      padding: 0 1em;
-                      font-size: 15px;
-                    "
-                        className="badge d-flex my-2 gap-4 align-items-center justify-items-between"
-                      >
-                        SI
-                        <input
-                          type="checkbox"
-                          name="sustanciado"
-                          id="checkSustanciado"
-                          value="si"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col text-start">
-                    <div
-                      className="labelInput py-4 "
-                      id="boxFechaSustanciado"
-                      style="display: none"
-                    >
-                      <label for="fechaSustanciado">
-                        Fecha de sustanciación:
-                      </label>
-                      <input
-                        type="date"
-                        placeholder=""
-                        name="fechaSustanciado"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="labelInput">
-                  <label for="comisionAsesora"> Comisión Asesora: </label>
-                  <div className="" style="display: flex; gap: 40px">
-                    <input type="text" placeholder="" name="" />
-                    <button
-                      type="button"
-                      className="btn text-white btn-sm mx-5"
-                      style="background-color: var(--red)"
-                    >
-                      <i className="fas fa-plus px-1"> </i>
-                      Agregar Jurado
-                    </button>
-                  </div>
-                </div>
-
-                <div className="d-flex flex-column gap-2 mb-4">
-                  <div className="asignatura">
-                    <span className="d-flex justify-content-between gap-4 align-items-center px-3">
-                      <p
-                        className="text-nowrap p-0 m-0"
-                        style="
-                        text-align: start;
-                        font-size: 0.9em;
-                        white-space: nowrap;
-                        width: 100%;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                      "
-                      >
-                        Salvio Martin MENENDEZ
-                      </p>
-
-                      <i className="fas fa-trash-alt px-3"></i>
-                    </span>
-                  </div>
-                  <div className="asignatura">
-                    <span className="d-flex justify-content-between gap-4 align-items-center px-3">
-                      <p
-                        className="text-nowrap p-0 m-0"
-                        style="
-                        text-align: start;
-                        font-size: 0.9em;
-                        white-space: nowrap;
-                        width: 100%;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                      "
-                      >
-                        Andrea Cecilia MENEGOTTO
-                      </p>
-
-                      <i className="fas fa-trash-alt px-3"></i>
-                    </span>
-                  </div>
-                  <div className="asignatura">
-                    <span className="d-flex justify-content-between gap-4 align-items-center px-3">
-                      <p
-                        className="text-nowrap p-0 m-0"
-                        style="
-                        text-align: start;
-                        font-size: 0.9em;
-                        white-space: nowrap;
-                        width: 100%;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                      "
-                      >
-                        Graciela ALVAREZ
-                      </p>
-
-                      <i className="fas fa-trash-alt px-3"></i>
-                    </span>
-                  </div>
-                </div>
-
-                <div className="row">
-                  <div className="col">
-                    <div className="labelInput">
-                      <label for="fechaDesignacion">
-                        Fecha de designación:
-                      </label>
-                      <input
-                        type="date"
-                        placeholder=""
-                        name="fechaDesignacion"
-                      />
-                    </div>
-                  </div>
-                  <div className="col">
-                    <div className="labelInput">
-                      <label for="fechaPaseArchivo">
-                        Fecha de pase a Archivo:
-                      </label>
-                      <input
-                        type="date"
-                        placeholder=""
-                        name="fechaPaseArchivo"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="labelInput">
-                  <label for="observaciones"> Observaciones: </label>
-                  <textarea
-                    rows="3"
-                    cols="75"
-                    placeholder=""
-                    name="observaciones"
-                  ></textarea>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                style="margin-bottom: 50px; margin-top: 30px"
-              >
-                Finalizar Formulario
-              </button>
-            </div>
-          </form>
-        </main> 
-      </div> */}
     </>
   );
 }

@@ -67,12 +67,12 @@ function App() {
 
   /* RHF functions */
   const {
-    reset,
     resetField,
     control,
     watch,
     handleSubmit,
     register,
+    getValues,
     clearErrors,
     setValue,
     setError,
@@ -102,6 +102,8 @@ function App() {
   const [postulantesAgregados, setPostulantesAgregados] = useState([]);
   const [juradosAgregados, setJuradosAgregados] = useState([]);
 
+  const [posicionSeleccionado, setPosicionSeleccionado] = useState(1);
+
   const [isLoading, setIsLoading] = useState(false);
 
   const pages = ["Nuevo Formulario", "Editar Formulario", "Ver Formulario"];
@@ -130,6 +132,10 @@ function App() {
 
   const postulantesData = postulantesAgregados.map((el, i) => ({
     label: el.postulante,
+    id: i + 1,
+  }));
+  const asignaturasData = asignaturasAgregadas.map((el, i) => ({
+    label: el.asignatura,
     id: i + 1,
   }));
 
@@ -268,14 +274,19 @@ function App() {
 
     const draft = [
       ...seleccionadosAgregados,
-      { seleccionado: seleccionado, jurado: juradoDisidente || null },
+      {
+        seleccionado: seleccionado,
+        jurado: juradoDisidente || null,
+        posicion: posicionSeleccionado,
+      },
     ];
+    setPosicionSeleccionado(posicionSeleccionado + 1);
+
     setSeleccionadosAgregados(draft);
 
     localStorage.setItem("seleccionados", JSON.stringify(draft));
 
     //resetField("seleccionados");
-    resetField("juradoDisidente");
   };
 
   /* Eliminar una asignatura del array de Asignaturas */
@@ -323,7 +334,7 @@ function App() {
         if (result.isConfirmed) {
           setSeleccionadosAgregados([]);
           setDictamenDisidencia(false);
-          //resetField("seleccionados");
+          resetField("juradoDisidente");
         } else if (result.dismiss === Swal.DismissReason.cancel) {
           Swal.close();
         }
@@ -342,7 +353,7 @@ function App() {
         if (result.isConfirmed) {
           setSeleccionadosAgregados([]);
           setDictamenDisidencia(true);
-          //resetField("seleccionados");
+          resetField("juradoDisidente");
         } else if (result.dismiss === Swal.DismissReason.cancel) {
           Swal.close();
         }
@@ -359,53 +370,57 @@ function App() {
     );
 
     setSeleccionadosAgregados(filter);
+    setPosicionSeleccionado(posicionSeleccionado - 1);
     //localStorage.setItem("comisionAsesora", JSON.stringify(filter));
   };
 
   /* Finalizar Formulario */
   const handleFinalizarFormulario = (data) => {
     setIsLoading(true);
-    //console.log(data);
+    /* console.log(
+      "fechas:",
+      new Date(data.fechaPublicacion).toLocaleDateString()
+    ); */
 
     const draft = {
-      ordenPrelacion: data.ordenPrelacion,
-      departamento: data["departamento"].id,
-      area: data.area,
-      cargo: data.cargo,
+      ordenPrelacion: parseInt(data.ordenPrelacion),
+      id_departamento: parseInt(data["departamento"].id),
+      id_area: parseInt(data.area),
+      id_cargo: parseInt(data.cargo),
       asignaturas: asignaturasAgregadas,
-      cantidadCargos: data.cantidadCargos,
-      fechaPublicacion: data.fechaPublicacion,
+      cantidadCargos: parseInt(data.cantidadCargos),
+      fechaPublicacion: new Date(data.fechaPublicacion).toLocaleDateString(),
       expedienteLlamado: data.expedienteLlamado,
-      dedicacion: data.dedicacion,
+      id_dedicacion: parseInt(data.dedicacion),
       oca: data.oca,
-      fechaCierre: data.fechaCierre,
+      fechaCierre: new Date(data.fechaCierre).toLocaleDateString(),
       expedienteConcurso: data.expedienteConcurso,
       interino: data.interino,
       postulantes: postulantesAgregados.map((item) => item.postulante),
       comisionAsesora: juradosAgregados.map((item) => item.jurado),
       seleccionados: seleccionadosAgregados,
-      sustanciado: data.sustanciado,
-      fechaSustanciado: data.fechaSustanciado,
+      sustanciado: mostrarFechaSustanciado,
+      fechaSustanciado: mostrarFechaSustanciado
+        ? new Date(data.fechaSustanciado).toLocaleDateString()
+        : null,
       recusaciones: data.recusaciones,
-      fechaPaseArchivo: data.fechaPaseArchivo,
-      fechaDesignacion: data.fechaDesignacion,
+      fechaPaseArchivo: new Date(data.fechaPaseArchivo).toLocaleDateString(),
+      fechaDesignacion: new Date(data.fechaDesignacion).toLocaleDateString(),
       observaciones: data.observaciones,
       convenio: data.convenio,
       investigacion: data.investigacion,
-      disidencia: data.disidencia,
+      disidencia: dictamenDisidencia,
     };
     axios
       .post("http://localhost/concursos/API/save_concurso.php", draft)
       .then((response) => {
-        // handle success
-        console.log(response);
+        setIsLoading(false);
+        console.log("Data recibida por el back: ", response.data);
       })
       .catch((error) => {
-        // handle error
         console.log(error);
       });
 
-    setIsLoading(false);
     /*  setTimeout(() => {
       localStorage.clear();
       setAsignaturasAgregadas([]);
@@ -516,7 +531,6 @@ function App() {
               <CardContent>
                 <form
                   className="d-grid justify-content-center"
-                  action=""
                   id="formulario"
                   onSubmit={handleSubmit(handleFinalizarFormulario)}
                 >
@@ -944,6 +958,7 @@ function App() {
                           />
                           <FieldTooltip title="Corresponde a la fecha del cierre del concurso." />
                         </span>
+
                         {/* Expediente Concurso  */}
                         <SimpleInput
                           label="Expediente de Concurso Nº"
@@ -981,15 +996,15 @@ function App() {
                             style={{
                               display: "flex",
                               justifyContent: "start",
-                              alignItems: "center",
-                              gap: 30,
+                              alignItems: "start",
+                              gap: 50,
                               border: "1px solid" + deepPurple[400],
                               borderRadius: 4,
                               padding: "30px 15px",
                             }}
                           >
-                            <div className="row gap-3">
-                              <div className="col-md-8">
+                            <div className="row gap-3 d-flex justify-content-between">
+                              <div className="col-md-4">
                                 <SimpleInput
                                   label="Postulantes"
                                   /* helperText={
@@ -1002,7 +1017,47 @@ function App() {
                                   name="postulante"
                                 />
                               </div>
-                              <div className="col-md-4">
+                              <div className="col-md-6 ">
+                                <Controller
+                                  control={control}
+                                  name="Asignatura"
+                                  defaultValue={asignaturasData[0]}
+                                  render={({
+                                    field: { ref, onChange, ...field },
+                                  }) => (
+                                    <Autocomplete
+                                      disablePortal
+                                      defaultValue={null}
+                                      noOptionsText="Sin resultados"
+                                      options={asignaturasData}
+                                      isOptionEqualToValue={(option, value) =>
+                                        option.label === value.label
+                                      }
+                                      onChange={(_, data) =>
+                                        data && onChange(data.id)
+                                      }
+                                      renderInput={(params) => (
+                                        <TextField
+                                          {...params}
+                                          {...field}
+                                          inputRef={ref}
+                                          //required
+                                          sx={{
+                                            minWidth: 250,
+                                          }}
+                                          /*  error={Boolean(errors.Asignatura)}
+                                          InputLabelProps={{
+                                            required: false,
+                                          }} */
+                                          variant="outlined"
+                                          label="Asignatura a la cual se postula"
+                                        />
+                                      )}
+                                    />
+                                  )}
+                                />
+                              </div>
+                              <div className="col-md-2">
                                 <Button
                                   sx={{
                                     whiteSpace: "nowrap",
@@ -1182,50 +1237,54 @@ function App() {
                                 />
                                 <FieldTooltip title="Corresponde a los candidatos seleccionados. El orden de mérito debe respetarse en la lista, el primero corresponde al primer orden, el segundo al siguiente y así sucesivamente" />
                               </span>
+                              <div className="d-flex flex-column align-items-center">
+                                <small htmlFor="">Orden de mérito </small>
+                                <p>Nº {posicionSeleccionado}</p>
+                              </div>
+
+                              {/* Si el dictamen esta en disidencia: */}
                               {dictamenDisidencia && (
-                                <>
-                                  <Controller
-                                    control={control}
-                                    name="juradoDisidente"
-                                    defaultValue={juradosData[0]}
-                                    render={({
-                                      field: { ref, onChange, ...field },
-                                    }) => (
-                                      <Autocomplete
-                                        disablePortal
-                                        defaultValue={null}
-                                        noOptionsText="Sin resultados"
-                                        options={juradosData}
-                                        sx={{ width: 300 }}
-                                        isOptionEqualToValue={(option, value) =>
-                                          option.label === value.label
-                                        }
-                                        onChange={(_, data) =>
-                                          data && onChange(data.label)
-                                        }
-                                        renderInput={(params) => (
-                                          <TextField
-                                            {...params}
-                                            {...field}
-                                            inputRef={ref}
-                                            /* required
+                                <Controller
+                                  control={control}
+                                  name="juradoDisidente"
+                                  defaultValue={juradosData[0]}
+                                  render={({
+                                    field: { ref, onChange, ...field },
+                                  }) => (
+                                    <Autocomplete
+                                      disablePortal
+                                      defaultValue={null}
+                                      noOptionsText="Sin resultados"
+                                      options={juradosData}
+                                      sx={{ width: 300 }}
+                                      isOptionEqualToValue={(option, value) =>
+                                        option.label === value.label
+                                      }
+                                      onChange={(_, data) =>
+                                        data && onChange(data.label)
+                                      }
+                                      renderInput={(params) => (
+                                        <TextField
+                                          {...params}
+                                          {...field}
+                                          inputRef={ref}
+                                          /* required
                                             error={Boolean(
                                               errors.seleccionados
                                             )}
                                             InputLabelProps={{
                                               required: false,
                                             }} */
-                                            variant="outlined"
-                                            label="Jurado"
-                                          />
-                                        )}
-                                      />
-                                    )}
-                                  />
-                                </>
+                                          variant="outlined"
+                                          label="Jurado"
+                                        />
+                                      )}
+                                    />
+                                  )}
+                                />
                               )}
                             </span>
-
+                            {/* Checkbox */}
                             <div
                               style={{
                                 display: "flex",
@@ -1296,7 +1355,8 @@ function App() {
                           </div>
                         </div>
 
-                        {/* Seleccionados agregados */}
+                        {/* Seleccionados Agregados */}
+
                         {seleccionadosAgregados &&
                           seleccionadosAgregados.length > 0 && (
                             <ScrollContainer
@@ -1310,7 +1370,13 @@ function App() {
                             >
                               <Stack
                                 spacing={2}
-                                direction="row"
+                                direction={
+                                  seleccionadosAgregados.find(
+                                    (obj) => obj.jurado === null
+                                  )
+                                    ? "row"
+                                    : "column"
+                                }
                                 style={{ padding: "0 10px" }}
                               >
                                 {seleccionadosAgregados.map((el, i) =>
@@ -1326,6 +1392,7 @@ function App() {
                                             alignItems: "center",
                                           }}
                                         >
+                                          {el["posicion"]}º -{" "}
                                           {capitalize(el["seleccionado"])}
                                           <SafetyDividerOutlinedIcon color="primary" />
                                           {capitalize(el["jurado"])}
@@ -1338,7 +1405,12 @@ function App() {
                                   ) : (
                                     <Chip
                                       key={i}
-                                      label={capitalize(el["seleccionado"])}
+                                      label={
+                                        <span>
+                                          {el["posicion"]}º -{" "}
+                                          {capitalize(el["seleccionado"])}
+                                        </span>
+                                      }
                                       onDelete={() =>
                                         handleDeleteSeleccionado(el)
                                       }
@@ -1531,6 +1603,16 @@ function App() {
                         </span>
                       </div>
                     </div>
+
+                    <Button
+                      startIcon={<Save />}
+                      variant="outlined"
+                      size="large"
+                      onClick={() => console.log(getValues())}
+                    >
+                      TEST DATA
+                    </Button>
+
                     {/* Finalizar formulario */}
                     {!isLoading ? (
                       <Button

@@ -1015,7 +1015,7 @@ function App() {
                           tooltip="Corresponde al N° de OCA de la designación, se ingresa como figura en la ordenanza. Ej: 2879/15"
                           error={Boolean(errors.OcaDesignacion)}
                           register={register}
-                          name="OcaDesignacion"
+                          name="oca"
                           required
                         />
 

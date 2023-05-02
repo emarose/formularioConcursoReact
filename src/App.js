@@ -199,16 +199,9 @@ function App() {
 
   /* Agregar una postulante al array de Postulantes */
   const handleAgregarPostulante = () => {
-    if (!postulante)
+    if (!postulante || !asignaturaPostulada)
       return Swal.fire({
-        title: "Ingrese un Postulante.",
-        icon: "error",
-        confirmButtonText: "Volver",
-      });
-
-    if (asignaturaPostulada === null)
-      return Swal.fire({
-        title: "Ingrese una Asignatura a la cual se postula.",
+        title: "Ingrese un Postulante y una Asignatura a la cual se postula.",
         icon: "error",
         confirmButtonText: "Volver",
       });

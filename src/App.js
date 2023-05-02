@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import "./App.css";
 
 /* Icons */
-import { Share, Save, Adb, Add } from "@mui/icons-material";
+import { Share, Save, Add } from "@mui/icons-material";
 import SafetyDividerOutlinedIcon from "@mui/icons-material/SafetyDividerOutlined";
 
 /* Theme */
@@ -239,7 +239,7 @@ function App() {
         },
       },
     ];
-    console.log(draft);
+
     setPostulantesAgregados(draft);
     resetField("postulante");
 
@@ -492,13 +492,13 @@ function App() {
       fechaDesignacion: new Date(data.fechaDesignacion).toLocaleDateString(),
       observaciones: data.observaciones,
       disidencia: dictamenDisidencia,
+      designados: designadosAgregados,
     };
-    console.log("draft: ", draft);
+    console.log("draft data: ", draft);
     await axios
       .post("http://localhost/concursos/API/save_concurso.php", draft)
       .then((response) => {
         setIsLoading(false);
-        console.log("Data recibida por el back: ", response.data);
       })
       .catch((error) => {
         console.log(error);

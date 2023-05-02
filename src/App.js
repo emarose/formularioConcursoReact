@@ -42,6 +42,10 @@ import {
   Container,
   Button,
   Grid,
+  ToggleButton,
+  ToggleButtonGroup,
+  RadioGroup,
+  Radio,
 } from "@mui/material";
 
 /* Custom Components */
@@ -74,6 +78,7 @@ function App() {
     register,
     getValues,
     clearErrors,
+    reset,
     setValue,
     setError,
     formState: { errors },
@@ -83,12 +88,20 @@ function App() {
   const [conExtension, setConExtension] = useState(false);
   const [dictamenDisidencia, setDictamenDisidencia] = useState(false);
 
+  const dedicacionNoSimpleOptions = [
+    { label: "Investigación", value: 1 },
+    { label: "Gestión", value: 2 },
+    { label: "Extensión", value: 3 },
+  ];
+
   const mostrarInvestigacion = watch("dedicacion");
   const asignatura = watch("asignatura");
   const postulante = watch("postulante");
   const jurado = watch("comisionAsesora");
   const juradoDisidente = watch("juradoDisidente");
   const seleccionado = watch("seleccionados");
+  const designado = watch("designados");
+  const asignaturaPostulada = watch("asignaturaPostulada");
   const cantidadCargos = watch("cantidadCargos");
 
   const [fechaPublicacion, setFechaPublicacion] = useState();
@@ -100,9 +113,11 @@ function App() {
   const [asignaturasAgregadas, setAsignaturasAgregadas] = useState([]);
   const [seleccionadosAgregados, setSeleccionadosAgregados] = useState([]);
   const [postulantesAgregados, setPostulantesAgregados] = useState([]);
+  const [designadosAgregados, setDesignadosAgregados] = useState([]);
   const [juradosAgregados, setJuradosAgregados] = useState([]);
 
   const [posicionSeleccionado, setPosicionSeleccionado] = useState(1);
+  const [posicionDesignado, setPosicionDesignado] = useState(1);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -134,6 +149,7 @@ function App() {
     label: el.postulante,
     id: i + 1,
   }));
+
   const asignaturasData = asignaturasAgregadas.map((el, i) => ({
     label: el.asignatura,
     id: i + 1,
@@ -185,7 +201,14 @@ function App() {
   const handleAgregarPostulante = () => {
     if (!postulante)
       return Swal.fire({
-        title: "Ingrese un Postulante",
+        title: "Ingrese un Postulante.",
+        icon: "error",
+        confirmButtonText: "Volver",
+      });
+
+    if (asignaturaPostulada === null)
+      return Swal.fire({
+        title: "Ingrese una Asignatura a la cual se postula.",
         icon: "error",
         confirmButtonText: "Volver",
       });
@@ -203,12 +226,24 @@ function App() {
       });
     }
 
-    const draft = [...postulantesAgregados, { postulante: postulante }];
+    let idAsignatura = asignaturaPostulada.split(" -")[0];
+    let labelAsignatura = asignaturaPostulada.split("- ")[1];
 
+    const draft = [
+      ...postulantesAgregados,
+      {
+        postulante: postulante,
+        asignaturaPostulada: {
+          id: parseInt(idAsignatura),
+          asignatura: labelAsignatura,
+        },
+      },
+    ];
+    console.log(draft);
     setPostulantesAgregados(draft);
+    resetField("postulante");
 
     localStorage.setItem("postulantes", JSON.stringify(draft));
-    resetField("postulante");
   };
 
   /* Agregar una jurado al array de Jurados */
@@ -289,6 +324,42 @@ function App() {
     //resetField("seleccionados");
   };
 
+  /* Agregar una asignatura al array de Designados */
+  const handleAgregarDesignado = () => {
+    if (!designado)
+      return Swal.fire({
+        title: "Ingrese un Designado",
+        icon: "error",
+        confirmButtonText: "Volver",
+      });
+
+    if (
+      designadosAgregados &&
+      designadosAgregados.filter((item) => item.designado === designado)
+        .length > 0
+    ) {
+      return Swal.fire({
+        title: "Designado duplicado",
+        text: "El postulante ingresado ya se encuentra agregado.",
+        icon: "error",
+        confirmButtonText: "Volver",
+      });
+    }
+
+    const draft = [
+      ...designadosAgregados,
+      {
+        designado: designado,
+        posicion: posicionDesignado,
+      },
+    ];
+    setPosicionDesignado(posicionDesignado + 1);
+
+    setDesignadosAgregados(draft);
+
+    localStorage.setItem("designados", JSON.stringify(draft));
+  };
+
   /* Eliminar una asignatura del array de Asignaturas */
   const handleDeleteAsignatura = (asignatura) => {
     const filter = asignaturasAgregadas.filter(
@@ -316,6 +387,17 @@ function App() {
 
     setJuradosAgregados(filter);
     localStorage.setItem("comisionAsesora", JSON.stringify(filter));
+  };
+
+  /* Eliminar un designado del array de Designados */
+  const handleDeleteDesignado = (designado) => {
+    const filter = designadosAgregados.filter(
+      (designadoAgregado) => designadoAgregado !== designado
+    );
+    setPosicionDesignado(posicionDesignado - 1);
+
+    setDesignadosAgregados(filter);
+    localStorage.setItem("designados", JSON.stringify(filter));
   };
 
   /* Manejar el checkbox de dictamen en disidencia (Seleccionados) */
@@ -375,28 +457,30 @@ function App() {
   };
 
   /* Finalizar Formulario */
-  const handleFinalizarFormulario = (data) => {
+  const handleFinalizarFormulario = async (data) => {
     setIsLoading(true);
-    /* console.log(
-      "fechas:",
-      new Date(data.fechaPublicacion).toLocaleDateString()
-    ); */
 
     const draft = {
       ordenPrelacion: parseInt(data.ordenPrelacion),
-      id_departamento: parseInt(data["departamento"].id),
-      id_area: parseInt(data.area),
+      id_departamento: parseInt(data.departamento),
+      area: data.area,
       id_cargo: parseInt(data.cargo),
       asignaturas: asignaturasAgregadas,
       cantidadCargos: parseInt(data.cantidadCargos),
       fechaPublicacion: new Date(data.fechaPublicacion).toLocaleDateString(),
       expedienteLlamado: data.expedienteLlamado,
-      id_dedicacion: parseInt(data.dedicacion),
+      dedicacion: {
+        id: parseInt(data.dedicacion),
+        tipo:
+          parseInt(data.dedicacion) === 1
+            ? null
+            : parseInt(data.dedicacionOption),
+      },
       oca: data.oca,
       fechaCierre: new Date(data.fechaCierre).toLocaleDateString(),
       expedienteConcurso: data.expedienteConcurso,
       interino: data.interino,
-      postulantes: postulantesAgregados.map((item) => item.postulante),
+      postulantes: postulantesAgregados.map((item) => item),
       comisionAsesora: juradosAgregados.map((item) => item.jurado),
       seleccionados: seleccionadosAgregados,
       sustanciado: mostrarFechaSustanciado,
@@ -407,11 +491,10 @@ function App() {
       fechaPaseArchivo: new Date(data.fechaPaseArchivo).toLocaleDateString(),
       fechaDesignacion: new Date(data.fechaDesignacion).toLocaleDateString(),
       observaciones: data.observaciones,
-      convenio: data.convenio,
-      investigacion: data.investigacion,
       disidencia: dictamenDisidencia,
     };
-    axios
+    console.log("draft: ", draft);
+    await axios
       .post("http://localhost/concursos/API/save_concurso.php", draft)
       .then((response) => {
         setIsLoading(false);
@@ -570,7 +653,7 @@ function App() {
                                   option.label === value.label
                                 }
                                 onChange={(_, data) =>
-                                  data && onChange(data.id)
+                                  data && onChange(`${data.id} - ${data.label}`)
                                 }
                                 renderInput={(params) => (
                                   <TextField
@@ -664,12 +747,7 @@ function App() {
                             <SimpleInput
                               label="Asignatura"
                               placeholder="Ej: Literatura Y Cultura Latinoamericanas I"
-                              /* helperText={
-                                errors.asignatura &&
-                                "Ingrese al menos una asignatura"
-                              } */
                               tooltip="Corresponde a la asignatura indicada en el llamado. Se debe indicar el nombre completo. Ej: Literatura Y Cultura Latinoamericanas I"
-                              //error={Boolean(errors.asignatura)}
                               register={register}
                               name="asignatura"
                             />
@@ -899,22 +977,29 @@ function App() {
                           <FieldTooltip title="Corresponde a la dedicación requerida." />
                         </span>
 
-                        {/* Investigación */}
+                        {/* Dedicacion simple - 3 opciones */}
                         {mostrarInvestigacion &&
                           mostrarInvestigacion !== "1" && (
-                            <TextareaAutosize
-                              disabled={Boolean(!mostrarInvestigacion)}
-                              className="textArea"
-                              placeholder="Investigación"
-                              {...register("investigacion")}
-                              name="investigacion"
-                              style={{
-                                width: 300,
-                                borderRadius: 4,
-                                borderColor: "#c4c4c4",
-                                padding: 15,
-                              }}
-                              minRows={4}
+                            <Controller
+                              name="dedicacionOption"
+                              control={control}
+                              defaultValue={1}
+                              rules={{ required: true }}
+                              render={({ field }) => (
+                                <RadioGroup
+                                  {...field}
+                                  style={{ marginLeft: 10 }}
+                                >
+                                  {dedicacionNoSimpleOptions.map((option) => (
+                                    <FormControlLabel
+                                      key={option.value}
+                                      value={option.value}
+                                      control={<Radio />}
+                                      label={option.label}
+                                    />
+                                  ))}
+                                </RadioGroup>
+                              )}
                             />
                           )}
                       </div>
@@ -1006,21 +1091,16 @@ function App() {
                             <div className="row gap-3 d-flex justify-content-between">
                               <div className="col-md-4">
                                 <SimpleInput
-                                  label="Postulantes"
-                                  /* helperText={
-                                errors.asignatura &&
-                                "Ingrese al menos una asignatura"
-                              } */
+                                  label="Postulante"
                                   tooltip="Corresponde a los postulantes inscriptos en el concurso. Ingresar Apellido Nombre(DNInúmerodedni);Ej : Perez Juan (DNI25333788)"
-                                  //error={Boolean(errors.asignatura)}
                                   register={register}
                                   name="postulante"
                                 />
                               </div>
-                              <div className="col-md-6 ">
+                              <div className="col-md-6 col-sm-12">
                                 <Controller
                                   control={control}
-                                  name="Asignatura"
+                                  name="asignaturaPostulada"
                                   defaultValue={asignaturasData[0]}
                                   render={({
                                     field: { ref, onChange, ...field },
@@ -1034,23 +1114,21 @@ function App() {
                                         option.label === value.label
                                       }
                                       onChange={(_, data) =>
-                                        data && onChange(data.id)
+                                        data &&
+                                        onChange(`${data.id} - ${data.label}`)
                                       }
                                       renderInput={(params) => (
                                         <TextField
                                           {...params}
                                           {...field}
                                           inputRef={ref}
-                                          //required
                                           sx={{
+                                            textTransform: "capitalize",
                                             minWidth: 250,
                                           }}
-                                          /*  error={Boolean(errors.Asignatura)}
-                                          InputLabelProps={{
-                                            required: false,
-                                          }} */
                                           variant="outlined"
-                                          label="Asignatura a la cual se postula"
+                                          name="aa"
+                                          label="Asignatura"
                                         />
                                       )}
                                     />
@@ -1093,7 +1171,14 @@ function App() {
                                 {postulantesAgregados.map((el, i) => (
                                   <Chip
                                     key={i}
-                                    label={capitalize(el["postulante"])}
+                                    label={
+                                      <>
+                                        {capitalize(el["postulante"])} -{" "}
+                                        {capitalize(
+                                          el["asignaturaPostulada"].asignatura
+                                        )}
+                                      </>
+                                    }
                                     onDelete={() => handleDeletePostulante(el)}
                                   />
                                 ))}
@@ -1395,7 +1480,8 @@ function App() {
                                           {el["posicion"]}º -{" "}
                                           {capitalize(el["seleccionado"])}
                                           <SafetyDividerOutlinedIcon color="primary" />
-                                          {capitalize(el["jurado"])}
+                                          {el["jurado"] &&
+                                            capitalize(el["jurado"])}
                                         </span>
                                       }
                                       onDelete={() =>
@@ -1526,7 +1612,6 @@ function App() {
                         {/* Recusaciones  */}
                         <SimpleInput
                           label="Recusaciones"
-                          placeholder="Ej: 1544/18"
                           tooltip="Corresponde completar cuado hay recusaciones o exusaciones de jurados"
                           error={Boolean(errors.recusaciones)}
                           register={register}
@@ -1604,14 +1689,113 @@ function App() {
                       </div>
                     </div>
 
-                    <Button
-                      startIcon={<Save />}
-                      variant="outlined"
-                      size="large"
-                      onClick={() => console.log(getValues())}
+                    {/* Designados*/}
+                    <Card
+                      variant="elevation"
+                      elevation={2}
+                      sx={{ maxWidth: 1000 }}
                     >
-                      TEST DATA
-                    </Button>
+                      <CardContent>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 30,
+                            border: "1px solid" + deepPurple[400],
+                            borderRadius: 4,
+                            padding: "30px 15px",
+                          }}
+                        >
+                          <div className="row gap-3">
+                            <span className="d-flex">
+                              <div className="col-md-6">
+                                <Controller
+                                  control={control}
+                                  name="designados"
+                                  defaultValue={postulantesData[0]}
+                                  render={({
+                                    field: { ref, onChange, ...field },
+                                  }) => (
+                                    <Autocomplete
+                                      disablePortal
+                                      defaultValue={null}
+                                      noOptionsText="Sin resultados"
+                                      options={postulantesData}
+                                      sx={{ width: 300 }}
+                                      isOptionEqualToValue={(option, value) =>
+                                        option.label === value.label
+                                      }
+                                      onChange={(_, data) =>
+                                        data && onChange(data.label)
+                                      }
+                                      renderInput={(params) => (
+                                        <TextField
+                                          {...params}
+                                          {...field}
+                                          inputRef={ref}
+                                          variant="outlined"
+                                          label="Designados"
+                                        />
+                                      )}
+                                    />
+                                  )}
+                                />
+                              </div>
+                              <div className="col-md-4">
+                                <div className="d-flex flex-column align-items-center">
+                                  <small htmlFor="">Orden de mérito </small>
+                                  <p>Nº {posicionDesignado}</p>
+                                </div>
+                              </div>
+                            </span>
+                            <div className="row">
+                              <div className="col-md-4">
+                                <Button
+                                  sx={{
+                                    whiteSpace: "nowrap",
+                                  }}
+                                  onClick={handleAgregarDesignado}
+                                  variant="outlined"
+                                  type="button"
+                                >
+                                  <Add /> Agregar Designado
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Designados agregados */}
+                        {designadosAgregados &&
+                          designadosAgregados.length > 0 && (
+                            <ScrollContainer
+                              style={{
+                                marginTop: 15,
+                                padding: "10px 0",
+                                borderRadius: 4,
+                                border: `1px solid ${deepPurple[600]} `,
+                              }}
+                              className="scroll-container"
+                            >
+                              <Stack
+                                spacing={2}
+                                direction="row"
+                                style={{ padding: "0 10px" }}
+                              >
+                                {designadosAgregados.map((el, i) => (
+                                  <Chip
+                                    key={i}
+                                    label={`${el["posicion"]}º - ${capitalize(
+                                      el["designado"]
+                                    )} `}
+                                    onDelete={() => handleDeleteDesignado(el)}
+                                  />
+                                ))}
+                              </Stack>
+                            </ScrollContainer>
+                          )}
+                      </CardContent>
+                    </Card>
 
                     {/* Finalizar formulario */}
                     {!isLoading ? (

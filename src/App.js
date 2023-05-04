@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import "./App.css";
 
 /* Icons */
-import { Share, Save, Add } from "@mui/icons-material";
+import { Share, Save, Add, Check } from "@mui/icons-material";
 import SafetyDividerOutlinedIcon from "@mui/icons-material/SafetyDividerOutlined";
 
 /* Theme */
@@ -104,6 +104,7 @@ function App() {
   const asignaturaPostulada = watch("asignaturaPostulada");
   const cantidadCargos = watch("cantidadCargos");
 
+  const [juradosD, setJuradosD] = useState();
   const [fechaPublicacion, setFechaPublicacion] = useState();
   const [fechaCierre, setFechaCierre] = useState();
   const [fechaSustanciado, setFechaSustanciado] = useState();
@@ -114,14 +115,20 @@ function App() {
   const [seleccionadosAgregados, setSeleccionadosAgregados] = useState([]);
   const [postulantesAgregados, setPostulantesAgregados] = useState([]);
   const [designadosAgregados, setDesignadosAgregados] = useState([]);
+
   const [juradosAgregados, setJuradosAgregados] = useState([]);
+  //const [juradosDis, setJuradosDis] = useState([]);
+
+  const jurados = [
+    ...new Set(seleccionadosAgregados.map((item) => item.jurado)),
+  ];
 
   const [posicionSeleccionado, setPosicionSeleccionado] = useState(1);
   const [posicionDesignado, setPosicionDesignado] = useState(1);
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const pages = ["Nuevo Formulario", "Editar Formulario", "Ver Formulario"];
+  const pages = ["Edición", "Concursos", "Buscar Concurso"];
 
   const [anchorElNav, setAnchorElNav] = useState();
 
@@ -277,10 +284,13 @@ function App() {
         confirmButtonText: "Volver",
       });
 
-    if (
+    /*  if (
       seleccionadosAgregados &&
+      !dictamenDisidencia &&
       seleccionadosAgregados.filter(
-        (item) => item.seleccionado === seleccionado
+        (item) =>
+          item.seleccionado === seleccionado &&
+          item.posicion === posicionSeleccionado
       ).length > 0
     ) {
       return Swal.fire({
@@ -289,7 +299,48 @@ function App() {
         icon: "error",
         confirmButtonText: "Volver",
       });
+    } */
+    /* if (
+      seleccionadosAgregados &&
+      dictamenDisidencia &&
+      seleccionadosAgregados.filter(
+        (item) =>
+          item.seleccionado === seleccionado &&
+          item.posicion === posicionSeleccionado
+      ).length > 0
+    ) {
+      return Swal.fire({
+        title: "Seleccionado duplicado",
+        text: "El postulante ingresado ya se encuentra agregado.",
+        icon: "error",
+        confirmButtonText: "Volver",
+      });
+    } */
+
+    if (
+      !dictamenDisidencia &&
+      seleccionadosAgregados.some(
+        (obj) => obj.posicion === posicionSeleccionado
+      )
+    ) {
+      return Swal.fire({
+        title: "Orden de mérito duplicado",
+        text: "El Orden de merito ya se encuentra agregado.",
+        icon: "error",
+        confirmButtonText: "Volver",
+      });
     }
+
+    /* if (
+      seleccionadosAgregados.some((obj) => obj.seleccionado === seleccionado)
+    ) {
+      return Swal.fire({
+        title: "Seleccionado duplicado",
+        text: "El Seleccionado ya se encuentra agregado.",
+        icon: "error",
+        confirmButtonText: "Volver",
+      });
+    } */
 
     if (dictamenDisidencia && !juradoDisidente) {
       return Swal.fire({
@@ -308,13 +359,22 @@ function App() {
         posicion: posicionSeleccionado,
       },
     ];
-    setPosicionSeleccionado(posicionSeleccionado + 1);
 
     setSeleccionadosAgregados(draft);
 
-    localStorage.setItem("seleccionados", JSON.stringify(draft));
+    const groupedData = seleccionadosAgregados.reduce((acc, item) => {
+      const { jurado } = item;
+      if (!acc[jurado]) {
+        acc[jurado] = [item];
+      } else {
+        acc[jurado].push(item);
+      }
+      return acc;
+    }, {});
 
-    //resetField("seleccionados");
+    setPosicionSeleccionado(posicionSeleccionado + 1);
+    setJuradosD(groupedData);
+    localStorage.setItem("seleccionados", JSON.stringify(draft));
   };
 
   /* Agregar una asignatura al array de Designados */
@@ -409,6 +469,7 @@ function App() {
         if (result.isConfirmed) {
           setSeleccionadosAgregados([]);
           setDictamenDisidencia(false);
+          setPosicionSeleccionado(1);
           resetField("juradoDisidente");
         } else if (result.dismiss === Swal.DismissReason.cancel) {
           Swal.close();
@@ -428,6 +489,7 @@ function App() {
         if (result.isConfirmed) {
           setSeleccionadosAgregados([]);
           setDictamenDisidencia(true);
+          setPosicionSeleccionado(1);
           resetField("juradoDisidente");
         } else if (result.dismiss === Swal.DismissReason.cancel) {
           Swal.close();
@@ -470,7 +532,8 @@ function App() {
             : parseInt(data.dedicacionOption),
       },
       oca: data.oca,
-      fechaCierre: new Date(data.fechaCierre).toLocaleDateString(),
+      ocaDesignacion: data.ocaDesignacion,
+      fechaCierre: new Date(data.fechaCierre),
       expedienteConcurso: data.expedienteConcurso,
       interino: data.interino,
       postulantes: postulantesAgregados.map((item) => item),
@@ -497,13 +560,12 @@ function App() {
         console.log(error);
       });
 
-    /*  setTimeout(() => {
+    /* setTimeout(() => {
       localStorage.clear();
       setAsignaturasAgregadas([]);
       setConExtension(false);
       reset({ data });
-     
-    }, 1000); */
+    }, 70000); */
   };
 
   useEffect(() => {
@@ -583,16 +645,16 @@ function App() {
                 Inicio
               </Link>
               <Link underline="hover" color="inherit">
-                Formularios
+                Concursos
               </Link>
               <Typography color={deepPurple[500]} fontWeight={400}>
-                Nuevo Formulario
+                Nuevo Concurso
               </Typography>
             </Breadcrumbs>
           </div>
 
           <div
-            className="container shadow-lg"
+            className="container-fluid shadow-lg"
             style={{
               paddingBottom: "30px",
               marginBottom: "30px",
@@ -600,7 +662,7 @@ function App() {
             }}
           >
             <Typography variant="h3" sx={{ padding: "30px 0" }} align="center">
-              Nuevo Formulario
+              Nuevo Concurso
             </Typography>
 
             <Card variant="outlined">
@@ -628,6 +690,7 @@ function App() {
                           name="ordenPrelacion"
                           required
                         />
+
                         {/* Departamento */}
                         <span className="d-flex align-items-top gap-3">
                           <Controller
@@ -667,6 +730,7 @@ function App() {
                           <FieldTooltip title="Corresponde al Departamento al cual pertenece la asignatura del concurso. Ej: Departamento de Filosofía" />
                         </span>
                       </div>
+
                       <div className="col-sm-12 col-md-6 col-lg-5 d-flex flex-column gap-3 mb-3">
                         {/* Area */}
                         <SimpleInput
@@ -998,15 +1062,13 @@ function App() {
                       </div>
 
                       <div className="col-sm-12 col-md-6 col-lg-5 d-flex flex-column gap-3 mb-3">
-                        {/* OCA Designacion */}
+                        {/* OCA */}
                         <SimpleInput
-                          label="OCA Designacion Nº"
+                          label="OCA Nº"
                           placeholder="Ej: 1544/18"
-                          helperText={
-                            errors.OcaDesignacion && "Ingrese un N° de OCA"
-                          }
-                          tooltip="Corresponde al N° de OCA de la designación, se ingresa como figura en la ordenanza. Ej: 2879/15"
-                          error={Boolean(errors.OcaDesignacion)}
+                          helperText={errors.oca && "Ingrese un N° de OCA"}
+                          tooltip="Corresponde al N° de OCA de la ordenanza, se ingresa como figura en la ordenanza. Ej: 2879/15"
+                          error={Boolean(errors.oca)}
                           register={register}
                           name="oca"
                           required
@@ -1229,7 +1291,7 @@ function App() {
                           </div>
                         </div>
 
-                        {/* Postulantes agregados */}
+                        {/* Jurados agregados */}
                         {juradosAgregados && juradosAgregados.length > 0 && (
                           <ScrollContainer
                             style={{
@@ -1315,12 +1377,8 @@ function App() {
                                 />
                                 <FieldTooltip title="Corresponde a los candidatos seleccionados. El orden de mérito debe respetarse en la lista, el primero corresponde al primer orden, el segundo al siguiente y así sucesivamente" />
                               </span>
-                              <div className="d-flex flex-column align-items-center">
-                                <small htmlFor="">Orden de mérito </small>
-                                <p>Nº {posicionSeleccionado}</p>
-                              </div>
 
-                              {/* Si el dictamen esta en disidencia: */}
+                              {/* Si el dictamen esta en disidencia */}
                               {dictamenDisidencia && (
                                 <Controller
                                   control={control}
@@ -1332,15 +1390,16 @@ function App() {
                                     <Autocomplete
                                       disablePortal
                                       defaultValue={null}
-                                      noOptionsText="Sin resultados"
+                                      noOptionsText="Sin reysultados"
                                       options={juradosData}
                                       sx={{ width: 300 }}
                                       isOptionEqualToValue={(option, value) =>
                                         option.label === value.label
                                       }
-                                      onChange={(_, data) =>
-                                        data && onChange(data.label)
-                                      }
+                                      onChange={(_, data) => {
+                                        data && onChange(data.label);
+                                        setPosicionSeleccionado(1);
+                                      }}
                                       renderInput={(params) => (
                                         <TextField
                                           {...params}
@@ -1361,6 +1420,60 @@ function App() {
                                   )}
                                 />
                               )}
+
+                              <div className="text-center">
+                                {!cantidadCargos ? (
+                                  <p>Ingrese la cantidad de cargos</p>
+                                ) : (
+                                  <>
+                                    <small>Orden de mérito</small>
+
+                                    <span className="d-flex align-items-center justify-content-between gap-2">
+                                      <Button
+                                        variant="outlined"
+                                        onClick={() =>
+                                          posicionSeleccionado !== 1 &&
+                                          setPosicionSeleccionado(
+                                            posicionSeleccionado - 1
+                                          )
+                                        }
+                                        disabled={
+                                          posicionSeleccionado === 1 ||
+                                          seleccionadosAgregados.length ===
+                                            cantidadCargos
+                                        }
+                                        size="small"
+                                      >
+                                        -
+                                      </Button>
+
+                                      <p style={{ whiteSpace: "nowrap" }}>
+                                        Nº{" "}
+                                        {posicionSeleccionado > cantidadCargos
+                                          ? cantidadCargos
+                                          : posicionSeleccionado}
+                                      </p>
+                                      <Button
+                                        variant="outlined"
+                                        onClick={() =>
+                                          posicionSeleccionado !==
+                                            parseInt(cantidadCargos) &&
+                                          setPosicionSeleccionado(
+                                            posicionSeleccionado + 1
+                                          )
+                                        }
+                                        disabled={
+                                          posicionSeleccionado >=
+                                          parseInt(cantidadCargos)
+                                        }
+                                        size="small"
+                                      >
+                                        +
+                                      </Button>
+                                    </span>
+                                  </>
+                                )}
+                              </div>
                             </span>
                             {/* Checkbox */}
                             <div
@@ -1425,8 +1538,31 @@ function App() {
                                   onClick={handleAgregarSeleccionado}
                                   variant="outlined"
                                   type="button"
+                                  /*  disabled={
+                                    parseInt(posicionSeleccionado) >=
+                                      parseInt(cantidadCargos) + 1 ||
+                                    (!dictamenDisidencia &&
+                                      seleccionadosAgregados.length >
+                                        cantidadCargos) ||
+                                    !cantidadCargos
+                                  } */
                                 >
-                                  <Add /> Agregar Seleccionado
+                                  {parseInt(posicionSeleccionado) >=
+                                    parseInt(cantidadCargos) + 1 ||
+                                  (!dictamenDisidencia &&
+                                    seleccionadosAgregados.length >
+                                      cantidadCargos) ? (
+                                    <>
+                                      <span className="mx-2" /> Cargos cubiertos
+                                    </>
+                                  ) : !cantidadCargos ? (
+                                    "Cantidad de cargos"
+                                  ) : (
+                                    <>
+                                      <Add />
+                                      Agregar seleccionado
+                                    </>
+                                  )}
                                 </Button>
                               </div>
                             </div>
@@ -1437,67 +1573,93 @@ function App() {
 
                         {seleccionadosAgregados &&
                           seleccionadosAgregados.length > 0 && (
-                            <ScrollContainer
-                              style={{
-                                marginTop: 15,
-                                padding: "10px 0",
-                                borderRadius: 4,
-                                border: `1px solid ${deepPurple[600]} `,
-                              }}
-                              className="scroll-container"
-                            >
-                              <Stack
-                                spacing={2}
-                                direction={
-                                  seleccionadosAgregados.find(
-                                    (obj) => obj.jurado === null
-                                  )
-                                    ? "row"
-                                    : "column"
-                                }
-                                style={{ padding: "0 10px" }}
-                              >
-                                {seleccionadosAgregados.map((el, i) =>
-                                  el.jurado ? (
-                                    <Chip
-                                      key={i}
-                                      label={
-                                        <span
-                                          style={{
-                                            display: "flex",
-                                            gap: 15,
-                                            fontSize: "14px",
-                                            alignItems: "center",
-                                          }}
+                            <div className="row">
+                              {Object.entries(juradosD).map(
+                                ([key, value], i) => (
+                                  <div className="col" key={i}>
+                                    <ScrollContainer
+                                      style={{
+                                        marginTop: 15,
+                                        padding: "10px 0",
+                                        borderRadius: 4,
+                                        border: `1px solid ${deepPurple[600]} `,
+                                      }}
+                                      className="scroll-container"
+                                    >
+                                      <p className="text-center text-capitalize">
+                                        {value[0].jurado}
+                                      </p>
+
+                                      {value.map((el) => (
+                                        <Stack
+                                          spacing={2}
+                                          style={{ padding: "5px 10px" }}
                                         >
-                                          {el["posicion"]}º -{" "}
-                                          {capitalize(el["seleccionado"])}
-                                          <SafetyDividerOutlinedIcon color="primary" />
-                                          {el["jurado"] &&
-                                            capitalize(el["jurado"])}
-                                        </span>
-                                      }
-                                      onDelete={() =>
-                                        handleDeleteSeleccionado(el)
-                                      }
-                                    />
-                                  ) : (
-                                    <Chip
-                                      key={i}
-                                      label={
-                                        <span>
-                                          {el["posicion"]}º -{" "}
-                                          {capitalize(el["seleccionado"])}
-                                        </span>
-                                      }
-                                      onDelete={() =>
-                                        handleDeleteSeleccionado(el)
-                                      }
-                                    />
-                                  )
-                                )}
-                              </Stack>
-                            </ScrollContainer>
+                                          <Chip
+                                            key={i}
+                                            label={
+                                              <span>
+                                                {el.posicion}º -{" "}
+                                                {capitalize(el.seleccionado)}
+                                              </span>
+                                            }
+                                            onDelete={() =>
+                                              handleDeleteSeleccionado(el)
+                                            }
+                                          />
+                                        </Stack>
+                                      ))}
+                                      {/* <Stack
+                                        spacing={2}
+                                        style={{ padding: "0 10px" }}
+                                      >
+                                        {value[0].jurado === null ? (
+                                          <Chip
+                                            key={i}
+                                            label={
+                                              <span
+                                                style={{
+                                                  display: "flex",
+                                                  gap: 15,
+                                                  fontSize: "14px",
+                                                  alignItems: "center",
+                                                }}
+                                              >
+                                                {value[0].posicion}º -{" "}
+                                                {capitalize(
+                                                  value[0].seleccionado
+                                                )}
+                                                <SafetyDividerOutlinedIcon color="primary" />
+                                                {value[0].jurado &&
+                                                  capitalize(value[0].jurado)}
+                                              </span>
+                                            }
+                                            onDelete={() =>
+                                              handleDeleteSeleccionado(value[0])
+                                            }
+                                          />
+                                        ) : (
+                                          <Chip
+                                            key={i}
+                                            label={
+                                              <span>
+                                                {value[0].posicion}º -{" "}
+                                                {capitalize(
+                                                  value[0].seleccionado
+                                                )}
+                                              </span>
+                                            }
+                                            onDelete={() =>
+                                              handleDeleteSeleccionado(value[0])
+                                            }
+                                          />
+                                        )}
+                                      </Stack> */}
+                                    </ScrollContainer>
+                                  </div>
+                                )
+                              )}
+                            </div>
                           )}
                       </CardContent>
                     </Card>
@@ -1634,6 +1796,21 @@ function App() {
                           />
                           <FieldTooltip title="Corresponde a la fecha en que se archiva expediente del concurso." />
                         </span>
+
+                        {/* OCA Designacion */}
+                        <SimpleInput
+                          label="OCA Designación Nº"
+                          placeholder="Ej: 1544/18"
+                          helperText={
+                            errors.ocaDesignacion &&
+                            "Ingrese un N° de Designación de OCA"
+                          }
+                          tooltip="Corresponde al N° de OCA, se ingresa como figura en la ordenanza. Ej: 2879/15"
+                          error={Boolean(errors.ocaDesignacion)}
+                          register={register}
+                          name="ocaDesignacion"
+                          required
+                        />
                       </div>
 
                       <div className="col-sm-12 col-md-6 col-lg-5 d-flex flex-column gap-3 mb-3">

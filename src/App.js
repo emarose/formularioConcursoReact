@@ -519,6 +519,7 @@ function App() {
             : parseInt(data.dedicacionOption),
       },
       oca: data.oca,
+      nup: data.NUP,
       ocaDesignacion: data.ocaDesignacion,
       fechaCierre: new Date(data.fechaCierre),
       expedienteConcurso: data.expedienteConcurso,

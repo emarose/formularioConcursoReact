@@ -1,29 +1,31 @@
 import { useEffect, useState } from "react";
 import "./App.css";
+import axios from "axios";
 
-/* Icons */
-import { Share, Save, Add, Check } from "@mui/icons-material";
+// Icons
+import { Share, Save, Add } from "@mui/icons-material";
 import SafetyDividerOutlinedIcon from "@mui/icons-material/SafetyDividerOutlined";
 
-/* Theme */
+// Theme
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import deepPurple from "@mui/material/colors/deepPurple";
 
-/* DatePicker - Date Functions */
+// DatePicker - Date Functions
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { DesktopDatePicker } from "@mui/x-date-pickers/DesktopDatePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import setDefaultOptions from "date-fns/setDefaultOptions";
 import { es } from "date-fns/locale";
-/* React Hook Form */
+
+// React Hook Form
 import { Controller, useForm } from "react-hook-form";
-/* Components (@MUI/LAB) */
+
+// Components (@MUI/LAB)
 import LoadingButton from "@mui/lab/LoadingButton";
 
-/* Components (@MUI/MATERIAL) */
+//Components (@MUI/MATERIAL)
 import {
   Autocomplete,
-  Breadcrumbs,
   capitalize,
   Card,
   CardContent,
@@ -35,32 +37,29 @@ import {
   TextareaAutosize,
   TextField,
   MenuItem,
-  AppBar,
-  Box,
-  Toolbar,
   Typography,
   Container,
   Button,
-  Grid,
-  ToggleButton,
-  ToggleButtonGroup,
   RadioGroup,
   Radio,
 } from "@mui/material";
 
-/* Custom Components */
+//Custom Components
 import FieldTooltip from "./components/FieldTooltip/FieldTooltip";
+import Navigation from "./components/Navigation/Navigation";
+import SimpleInput from "./components/SimpleInput/SimpleInput";
 
-/* Sweet Alert */
+//Sweet Alert
 import Swal from "sweetalert2";
 
-/* Horizontal Scroll */
+// Horizontal Scroll
 import ScrollContainer from "react-indiana-drag-scroll";
-import SimpleInput from "./components/SimpleInput/SimpleInput";
-import axios from "axios";
+import Breadcrumbs from "./components/Breadcrumb/Breadcrumb";
 
-/* set Timezone */
+// set Timezone
 setDefaultOptions({ locale: es });
+
+/* APP START */
 
 function App() {
   const theme = createTheme({
@@ -69,7 +68,7 @@ function App() {
     },
   });
 
-  /* RHF functions */
+  /* Funciones */
   const {
     resetField,
     control,
@@ -127,14 +126,6 @@ function App() {
   const [posicionDesignado, setPosicionDesignado] = useState(1);
 
   const [isLoading, setIsLoading] = useState(false);
-
-  const pages = ["Edición", "Concursos", "Buscar Concurso"];
-
-  const [anchorElNav, setAnchorElNav] = useState();
-
-  const handleCloseNavMenu = () => {
-    setAnchorElNav(null);
-  };
 
   const departamentosData = [
     { label: "Departamento de Letras", id: "1" },
@@ -277,36 +268,19 @@ function App() {
 
   /* Agregar una asignatura al array de Selecionados */
   const handleAgregarSeleccionado = () => {
-    if (!seleccionado)
+    if (!seleccionado) {
       return Swal.fire({
         title: "Ingrese un Seleccionado",
         icon: "error",
         confirmButtonText: "Volver",
       });
+    }
 
-    /*  if (
-      seleccionadosAgregados &&
+    if (
       !dictamenDisidencia &&
-      seleccionadosAgregados.filter(
-        (item) =>
-          item.seleccionado === seleccionado &&
-          item.posicion === posicionSeleccionado
-      ).length > 0
-    ) {
-      return Swal.fire({
-        title: "Seleccionado duplicado",
-        text: "El postulante ingresado ya se encuentra agregado.",
-        icon: "error",
-        confirmButtonText: "Volver",
-      });
-    } */
-    /* if (
       seleccionadosAgregados &&
-      dictamenDisidencia &&
       seleccionadosAgregados.filter(
-        (item) =>
-          item.seleccionado === seleccionado &&
-          item.posicion === posicionSeleccionado
+        (item) => item.seleccionado === seleccionado
       ).length > 0
     ) {
       return Swal.fire({
@@ -315,7 +289,7 @@ function App() {
         icon: "error",
         confirmButtonText: "Volver",
       });
-    } */
+    }
 
     if (
       !dictamenDisidencia &&
@@ -331,16 +305,27 @@ function App() {
       });
     }
 
-    /* if (
-      seleccionadosAgregados.some((obj) => obj.seleccionado === seleccionado)
+    console.log(
+      seleccionadosAgregados.filter((item) => item.jurado !== juradoDisidente)
+    );
+
+    if (
+      seleccionadosAgregados &&
+      dictamenDisidencia &&
+      seleccionadosAgregados.filter(
+        (item) =>
+          item.seleccionado === seleccionado &&
+          item.posicion === posicionSeleccionado &&
+          item.jurado === juradoDisidente
+      ).length > 0
     ) {
       return Swal.fire({
         title: "Seleccionado duplicado",
-        text: "El Seleccionado ya se encuentra agregado.",
+        text: "El postulante ingresado ya se encuentra agregado.",
         icon: "error",
         confirmButtonText: "Volver",
       });
-    } */
+    }
 
     if (dictamenDisidencia && !juradoDisidente) {
       return Swal.fire({
@@ -350,6 +335,17 @@ function App() {
         confirmButtonText: "Volver",
       });
     }
+    /* 
+    if (
+      seleccionadosAgregados.some((obj) => obj.seleccionado === seleccionado)
+    ) {
+      return Swal.fire({
+        title: "Seleccionado duplicado",
+        text: "El Seleccionado ya se encuentra agregado.",
+        icon: "error",
+        confirmButtonText: "Volver",
+      });
+    } */
 
     const draft = [
       ...seleccionadosAgregados,
@@ -362,18 +358,7 @@ function App() {
 
     setSeleccionadosAgregados(draft);
 
-    const groupedData = seleccionadosAgregados.reduce((acc, item) => {
-      const { jurado } = item;
-      if (!acc[jurado]) {
-        acc[jurado] = [item];
-      } else {
-        acc[jurado].push(item);
-      }
-      return acc;
-    }, {});
-
     setPosicionSeleccionado(posicionSeleccionado + 1);
-    setJuradosD(groupedData);
     localStorage.setItem("seleccionados", JSON.stringify(draft));
   };
 
@@ -500,14 +485,16 @@ function App() {
   };
 
   /* Eliminar un seleccionado del array de Seleccionados */
-  const handleDeleteSeleccionado = ({ seleccionado }) => {
+  const handleDeleteSeleccionado = (seleccionado) => {
     const filter = seleccionadosAgregados.filter(
-      (seleccionadoAgregado) =>
-        seleccionadoAgregado.seleccionado !== seleccionado
+      (seleccionadoAgregado) => seleccionadoAgregado !== seleccionado
     );
 
     setSeleccionadosAgregados(filter);
-    setPosicionSeleccionado(posicionSeleccionado - 1);
+    if (posicionSeleccionado >= 1) {
+      setPosicionSeleccionado(posicionSeleccionado - 1);
+    }
+
     //localStorage.setItem("comisionAsesora", JSON.stringify(filter));
   };
 
@@ -569,1135 +556,191 @@ function App() {
   };
 
   useEffect(() => {
-    const items = { ...localStorage };
+    /* const items = { ...localStorage };
     if (!items) return;
     items.asignatura && setAsignaturasAgregadas(JSON.parse(items.asignaturas));
     items.postulantes && setPostulantesAgregados(JSON.parse(items.postulantes));
     items.comisionAsesora &&
-      setJuradosAgregados(JSON.parse(items.comisionAsesora));
-  }, []);
+      setJuradosAgregados(JSON.parse(items.comisionAsesora)); */
+
+    const updatedGroupedData = seleccionadosAgregados.reduce((acc, item) => {
+      const { jurado } = item;
+      if (!acc[jurado]) {
+        acc[jurado] = [item];
+      } else {
+        acc[jurado] = [...acc[jurado], item];
+      }
+      return acc;
+    }, {});
+
+    Object.values(updatedGroupedData).forEach((arr) => {
+      arr.sort((a, b) => a.posicion - b.posicion);
+    });
+
+    setJuradosD(updatedGroupedData);
+  }, [seleccionadosAgregados]);
 
   return (
     <>
       <LocalizationProvider dateAdapter={AdapterDateFns}>
         <ThemeProvider theme={theme}>
-          <AppBar position="static">
-            <Container maxWidth="xl">
-              <Toolbar disableGutters>
-                <Typography
-                  variant="h6"
-                  noWrap
-                  component="a"
-                  href="/"
-                  sx={{
-                    mr: 2,
-                    display: { xs: "none", md: "flex" },
-                    fontWeight: 500,
-                    letterSpacing: ".1rem",
-                    color: "inherit",
-                    textDecoration: "none",
-                  }}
-                >
-                  INICIO
-                </Typography>
+          <>
+            <Navigation />
+            <Breadcrumbs />
 
-                <Typography
-                  variant="h5"
-                  noWrap
-                  component="a"
-                  href=""
-                  sx={{
-                    mr: 2,
-                    display: { xs: "flex", md: "none" },
-                    flexGrow: 1,
-                    fontFamily: "monospace",
-                    fontWeight: 700,
-                    letterSpacing: ".3rem",
-                    color: "inherit",
-                    textDecoration: "none",
-                  }}
-                >
-                  INICIO
-                </Typography>
-                <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
-                  {pages.map((page) => (
-                    <Button
-                      key={page}
-                      onClick={handleCloseNavMenu}
-                      sx={{ my: 2, color: "white", display: "block" }}
-                    >
-                      {page}
-                    </Button>
-                  ))}
-                </Box>
-              </Toolbar>
-            </Container>
-          </AppBar>
-
-          {/* BreadCrumbs */}
-          <div className="container">
-            <Breadcrumbs
-              sx={{ fontSize: 14 }}
-              aria-label="breadcrumb"
-              style={{ margin: "2em 0 1em 0" }}
+            <Container
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                paddingBottom: "30px",
+                marginBottom: "15px",
+              }}
             >
-              <Link underline="hover" color="inherit" href="/">
-                Inicio
-              </Link>
-              <Link underline="hover" color="inherit">
-                Concursos
-              </Link>
-              <Typography color={deepPurple[500]} fontWeight={400}>
+              <Typography variant="h3" className="my-4" align="center">
                 Nuevo Concurso
               </Typography>
-            </Breadcrumbs>
-          </div>
 
-          <div
-            className="container-fluid shadow-lg"
-            style={{
-              paddingBottom: "30px",
-              marginBottom: "30px",
-              borderRadius: 4,
-            }}
-          >
-            <Typography variant="h3" sx={{ padding: "30px 0" }} align="center">
-              Nuevo Concurso
-            </Typography>
-
-            <Card variant="outlined">
-              <CardContent>
-                <form
-                  className="d-grid justify-content-center"
-                  id="formulario"
-                  onSubmit={handleSubmit(handleFinalizarFormulario)}
-                >
-                  <Stack gap={2}>
-                    <div className="row d-flex justify-content-between gap-3 mt-3">
-                      <div className="col-sm-12 col-md-6 col-lg-6 col-xl-4 d-flex flex-column gap-3">
+              <Card
+                variant="outlined"
+                className="shadow-lg px-2"
+                sx={{ maxWidth: 935 }}
+              >
+                <CardContent>
+                  <form
+                    id="formulario"
+                    onSubmit={handleSubmit(handleFinalizarFormulario)}
+                  >
+                    <Stack gap={2} style={{ maxWidth: 1000, margin: "0 auto" }}>
+                      <div className="row align-items-center justify-content-between d-flex gap-3 my-3">
                         {/* Orden de Prelación */}
-                        <SimpleInput
-                          label="Orden de Prelación Nº "
-                          placeholder="Ej: 1000"
-                          type="number"
-                          helperText={
-                            errors.ordenPrelacion &&
-                            "Ingrese el Orden de Prelación"
-                          }
-                          tooltip="Corresponde al Orden de Prelación indicado en el llamado, se ingresa únicamente el número. Ej: 1423"
-                          error={Boolean(errors.ordenPrelacion)}
-                          register={register}
-                          name="ordenPrelacion"
-                          required
-                        />
-
-                        {/* Departamento */}
-                        <span className="d-flex align-items-top gap-3">
-                          <Controller
-                            control={control}
-                            name="departamento"
-                            defaultValue={departamentosData[0]}
-                            render={({
-                              field: { ref, onChange, ...field },
-                            }) => (
-                              <Autocomplete
-                                disablePortal
-                                defaultValue={null}
-                                noOptionsText="Sin resultados"
-                                options={departamentosData}
-                                isOptionEqualToValue={(option, value) =>
-                                  option.label === value.label
-                                }
-                                onChange={(_, data) =>
-                                  data && onChange(`${data.id} - ${data.label}`)
-                                }
-                                renderInput={(params) => (
-                                  <TextField
-                                    {...params}
-                                    {...field}
-                                    inputRef={ref}
-                                    required
-                                    sx={{ minWidth: 300 }}
-                                    error={Boolean(errors.departamento)}
-                                    InputLabelProps={{ required: false }}
-                                    variant="outlined"
-                                    label="Departamento"
-                                  />
-                                )}
-                              />
-                            )}
-                          />
-                          <FieldTooltip title="Corresponde al Departamento al cual pertenece la asignatura del concurso. Ej: Departamento de Filosofía" />
-                        </span>
-                      </div>
-
-                      <div className="col-sm-12 col-md-6 col-lg-5 d-flex flex-column gap-3 mb-3">
-                        {/* Area */}
-                        <SimpleInput
-                          label="Área"
-                          placeholder="Ej: Área II: Teoría Literaria"
-                          helperText={errors.area && "Ingrese un Área"}
-                          tooltip="Corresponde al Área a la cual pertenece la asignatura del concurso. Se debe ingresar como figura en el llamado. Ej: Área II: Teoría Literaria."
-                          error={Boolean(errors.area)}
-                          register={register}
-                          name="area"
-                          required
-                        />
-
-                        {/* Cargo */}
-                        <span className="d-flex align-items-top gap-3">
-                          <Controller
-                            control={control}
-                            name="cargo"
-                            defaultValue={cargosData[0]}
-                            render={({
-                              field: { ref, onChange, ...field },
-                            }) => (
-                              <Autocomplete
-                                disablePortal
-                                defaultValue={null}
-                                noOptionsText="Sin resultados"
-                                options={cargosData}
-                                sx={{ minWidth: 300 }}
-                                isOptionEqualToValue={(option, value) =>
-                                  option.label === value.label
-                                }
-                                onChange={(_, data) =>
-                                  data && onChange(data.id)
-                                }
-                                renderInput={(params) => (
-                                  <TextField
-                                    {...params}
-                                    {...field}
-                                    inputRef={ref}
-                                    error={Boolean(errors.cargo)}
-                                    required
-                                    InputLabelProps={{ required: false }}
-                                    variant="outlined"
-                                    label="Cargo"
-                                  />
-                                )}
-                              />
-                            )}
-                          />
-                          <FieldTooltip title="Corresponde al cargo docente requerido." />
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Asignatura */}
-                    <Card
-                      variant="elevation"
-                      elevation={2}
-                      sx={{ maxWidth: 1000 }}
-                    >
-                      <CardContent>
-                        <div id="asignaturaForm">
-                          <div
-                            style={{
-                              border: "1px solid" + deepPurple[400],
-                              borderRadius: 4,
-                              padding: "15px",
-                              margin: 0,
-                            }}
-                          >
-                            <SimpleInput
-                              label="Asignatura"
-                              placeholder="Ej: Literatura Y Cultura Latinoamericanas I"
-                              tooltip="Corresponde a la asignatura indicada en el llamado. Se debe indicar el nombre completo. Ej: Literatura Y Cultura Latinoamericanas I"
-                              register={register}
-                              name="asignatura"
-                            />
-
-                            <div
-                              style={{
-                                display: "flex",
-                                flexWrap: "wrap",
-                                alignItems: "center",
-                                justifyContent: "start",
-                                gap: "20px",
-                                width: "100%",
-                              }}
-                            >
-                              <div
-                                className="col-md-5"
-                                style={{
-                                  backgroundColor: deepPurple[50],
-                                  padding: "7.5px 10px",
-                                  borderRadius: 4,
-                                  margin: "8px 0",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "space-between",
-                                  width: "fit-content",
-                                }}
-                              >
-                                <FormControlLabel
-                                  control={
-                                    <Checkbox
-                                      sx={{
-                                        color: deepPurple[800],
-                                        "&.Mui-checked": {
-                                          color: deepPurple[600],
-                                        },
-                                      }}
-                                      onChange={() =>
-                                        setConExtension(!conExtension)
-                                      }
-                                      checked={conExtension}
-                                    />
-                                  }
-                                  label={
-                                    <>
-                                      <span
-                                        style={{
-                                          display: "flex",
-                                          gap: 15,
-                                          fontSize: "14px",
-                                          alignItems: "center",
-                                        }}
-                                      >
-                                        Extensión de funciones docentes en otra
-                                        asignatura
-                                        <Share color="primary" />
-                                      </span>
-                                    </>
-                                  }
-                                />
-                              </div>
-
-                              <div className="col-md-4">
-                                <Button
-                                  sx={{
-                                    whiteSpace: "nowrap",
-                                  }}
-                                  onClick={handleAgregarAsignatura}
-                                  variant="outlined"
-                                  type="button"
-                                >
-                                  <Add /> Agregar Asignatura
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Asignaturas agregadas */}
-                        {asignaturasAgregadas &&
-                          asignaturasAgregadas.length > 0 && (
-                            <ScrollContainer
-                              style={{
-                                marginTop: 15,
-                                padding: "10px 0",
-                                borderRadius: 4,
-                                border: `1px solid ${deepPurple[600]} `,
-                              }}
-                              className="scroll-container"
-                            >
-                              <Stack
-                                spacing={2}
-                                direction="row"
-                                style={{ padding: "0 10px" }}
-                              >
-                                {asignaturasAgregadas.map((el, i) =>
-                                  el.conExtension ? (
-                                    <Chip
-                                      key={i}
-                                      label={
-                                        <span
-                                          style={{
-                                            display: "flex",
-                                            gap: 15,
-                                            fontSize: "14px",
-                                            alignItems: "center",
-                                          }}
-                                        >
-                                          <Share color="primary" />
-                                          {capitalize(el["asignatura"])}
-                                        </span>
-                                      }
-                                      onDelete={() =>
-                                        handleDeleteAsignatura(el)
-                                      }
-                                    />
-                                  ) : (
-                                    <Chip
-                                      key={i}
-                                      label={capitalize(el["asignatura"])}
-                                      onDelete={() =>
-                                        handleDeleteAsignatura(el)
-                                      }
-                                    />
-                                  )
-                                )}
-                              </Stack>
-                            </ScrollContainer>
-                          )}
-                      </CardContent>
-                    </Card>
-
-                    <div className="row d-flex justify-content-between gap-3 mt-3">
-                      <div className="col-sm-12 col-md-6 col-lg-6 col-xl-4 d-flex flex-column gap-3">
-                        {/* Cantidad de cargos */}
-                        <SimpleInput
-                          label="Cantidad de Cargos"
-                          placeholder="Máximo: 11"
-                          helperText={
-                            errors.cantidadCargos &&
-                            "Cantidad de cargos mínimo: 1, máximo: 11"
-                          }
-                          tooltip="Se cargan la cantidad de cargos a concursar. Valor por defecto 1, máximo 11."
-                          error={Boolean(errors.cantidadCargos)}
-                          register={register}
-                          name="cantidadCargos"
-                          onChange={(e) => {
-                            const inputValue = parseInt(e.target.value, 10);
-                            const validNumbers = [
-                              1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-                            ];
-                            if (validNumbers.includes(inputValue)) {
-                              setValue("cantidadCargos", inputValue.toString());
-                              clearErrors("cantidadCargos");
-                            } else {
-                              setError("cantidadCargos", {
-                                type: "manual",
-                              });
+                        <div className="col-sm-12 col-md-6 col-lg-6 col-xl-4 d-flex flex-column gap-3">
+                          <SimpleInput
+                            label="Orden de Prelación Nº "
+                            placeholder="Ej: 1000"
+                            type="number"
+                            helperText={
+                              errors.ordenPrelacion &&
+                              "Ingrese el Orden de Prelación"
                             }
-                          }}
-                          required
-                        />
-
-                        {/* Fecha de Publicación */}
-                        <span className="d-flex align-items-top gap-3">
-                          <Controller
-                            name="fechaPublicacion"
-                            defaultValue={fechaPublicacion}
-                            control={control}
-                            render={({ field: { onChange, ...restField } }) => (
-                              <LocalizationProvider
-                                dateAdapter={AdapterDateFns}
-                              >
-                                <DesktopDatePicker
-                                  sx={{ minWidth: 300 }}
-                                  label="Fecha de Publicación"
-                                  onChange={(event) => {
-                                    onChange(event);
-                                    setFechaPublicacion(event);
-                                  }}
-                                  {...restField}
-                                />
-                              </LocalizationProvider>
-                            )}
+                            tooltip="Corresponde al Orden de Prelación indicado en el llamado, se ingresa únicamente el número. Ej: 1423"
+                            error={Boolean(errors.ordenPrelacion)}
+                            register={register}
+                            name="ordenPrelacion"
+                            required
                           />
-                          <FieldTooltip title="Corresponde a la fecha en la que se publica el llamado." />
-                        </span>
 
-                        {/* Expediente Llamado */}
-                        <SimpleInput
-                          label="Expediente Llamado Nº"
-                          placeholder="Ej: 7-0756/16"
-                          helperText={
-                            errors.expedienteLlamado &&
-                            "Ingrese un N° de expediente"
-                          }
-                          tooltip="Corresponde al N° de expediente administrativo del llamado, se ingresa como figura en el expediente. Ej: 7-3664/14"
-                          error={Boolean(errors.expedienteLlamado)}
-                          register={register}
-                          name="expedienteLlamado"
-                          required
-                        />
-
-                        {/* Dedicación */}
-                        <span className="d-flex align-items-top gap-3 ">
-                          <TextField
-                            select
-                            sx={{ minWidth: 300 }}
-                            label="Dedicación"
-                            defaultValue=""
-                            inputProps={register("dedicacion", {
-                              required: "Ingrese una dedicación",
-                            })}
-                            error={Boolean(errors.dedicacion)}
-                            helperText={errors.dedicacion?.message}
-                          >
-                            {[
-                              { label: "Simple", id: "1" },
-                              { label: "Exclusiva", id: "2" },
-                              { label: "Completa", id: "3" },
-                              { label: "Parcial", id: "4" },
-                            ].map((option) => (
-                              <MenuItem key={option.id} value={option.id}>
-                                {option.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
-                          <FieldTooltip title="Corresponde a la dedicación requerida." />
-                        </span>
-
-                        {/* Dedicacion simple - 3 opciones */}
-                        {mostrarInvestigacion &&
-                          mostrarInvestigacion !== "1" && (
+                          {/* Departamento */}
+                          <span className="d-flex align-items-top gap-3">
                             <Controller
-                              name="dedicacionOption"
                               control={control}
-                              defaultValue={1}
-                              rules={{ required: true }}
-                              render={({ field }) => (
-                                <RadioGroup
-                                  {...field}
-                                  style={{ marginLeft: 10 }}
-                                >
-                                  {dedicacionNoSimpleOptions.map((option) => (
-                                    <FormControlLabel
-                                      key={option.value}
-                                      value={option.value}
-                                      control={<Radio />}
-                                      label={option.label}
+                              name="departamento"
+                              defaultValue={departamentosData[0]}
+                              render={({
+                                field: { ref, onChange, ...field },
+                              }) => (
+                                <Autocomplete
+                                  disablePortal
+                                  defaultValue={null}
+                                  noOptionsText="Sin resultados"
+                                  options={departamentosData}
+                                  isOptionEqualToValue={(option, value) =>
+                                    option.label === value.label
+                                  }
+                                  onChange={(_, data) =>
+                                    data &&
+                                    onChange(`${data.id} - ${data.label}`)
+                                  }
+                                  renderInput={(params) => (
+                                    <TextField
+                                      {...params}
+                                      {...field}
+                                      inputRef={ref}
+                                      required
+                                      sx={{ minWidth: 300 }}
+                                      error={Boolean(errors.departamento)}
+                                      InputLabelProps={{ required: false }}
+                                      variant="outlined"
+                                      label="Departamento"
                                     />
-                                  ))}
-                                </RadioGroup>
+                                  )}
+                                />
                               )}
                             />
-                          )}
-                      </div>
+                            <FieldTooltip title="Corresponde al Departamento al cual pertenece la asignatura del concurso. Ej: Departamento de Filosofía" />
+                          </span>
+                        </div>
 
-                      <div className="col-sm-12 col-md-6 col-lg-5 d-flex flex-column gap-3 mb-3">
-                        {/* OCA */}
-                        <SimpleInput
-                          label="OCA Nº"
-                          placeholder="Ej: 1544/18"
-                          helperText={errors.oca && "Ingrese un N° de OCA"}
-                          tooltip="Corresponde al N° de OCA de la ordenanza, se ingresa como figura en la ordenanza. Ej: 2879/15"
-                          error={Boolean(errors.oca)}
-                          register={register}
-                          name="oca"
-                          required
-                        />
-
-                        {/* Fecha de Cierre */}
-                        <span className="d-flex align-items-top gap-3">
-                          <Controller
-                            name="fechaCierre"
-                            defaultValue={fechaCierre}
-                            control={control}
-                            render={({ field: { onChange, ...restField } }) => (
-                              <LocalizationProvider
-                                dateAdapter={AdapterDateFns}
-                              >
-                                <DesktopDatePicker
-                                  sx={{ minWidth: 300 }}
-                                  label="Fecha de Cierre"
-                                  onChange={(event) => {
-                                    onChange(event);
-                                    setFechaCierre(event);
-                                  }}
-                                  {...restField}
-                                />
-                              </LocalizationProvider>
-                            )}
+                        {/* Area */}
+                        <div className="col-sm-12 col-md-6 col-lg-5 d-flex flex-column gap-3">
+                          <SimpleInput
+                            label="Área"
+                            placeholder="Ej: Área II: Teoría Literaria"
+                            helperText={errors.area && "Ingrese un Área"}
+                            tooltip="Corresponde al Área a la cual pertenece la asignatura del concurso. Se debe ingresar como figura en el llamado. Ej: Área II: Teoría Literaria."
+                            error={Boolean(errors.area)}
+                            register={register}
+                            name="area"
+                            required
                           />
-                          <FieldTooltip title="Corresponde a la fecha del cierre del concurso." />
-                        </span>
 
-                        {/* Expediente Concurso  */}
-                        <SimpleInput
-                          label="Expediente de Concurso Nº"
-                          placeholder="Ej: 7-2183/18"
-                          helperText={
-                            errors.expedienteConcurso &&
-                            "Ingrese un N° expediente"
-                          }
-                          tooltip="Corresponde al N° de expediente administrativo del concurso, se ingresa como figura en el expediente. Ej: 7-3664/14"
-                          error={Boolean(errors.expedienteConcurso)}
-                          register={register}
-                          name="expedienteConcurso"
-                        />
-
-                        {/* Interino  */}
-                        <SimpleInput
-                          label="Interino"
-                          tooltip="Corresponde completar cuado hay un interino."
-                          error={Boolean(errors.interino)}
-                          register={register}
-                          name="interino"
-                        />
+                          {/* NUP */}
+                          <SimpleInput
+                            label="NUP Nº "
+                            placeholder="Ej: 1000"
+                            type="number"
+                            helperText={errors.NUP && "Ingrese el NUP"}
+                            tooltip="Corresponde al NUP indicado en el llamado, se ingresa únicamente el número. Ej: 1423"
+                            error={Boolean(errors.NUP)}
+                            register={register}
+                            name="NUP"
+                            required
+                          />
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Postulantes */}
-                    <Card
-                      variant="elevation"
-                      elevation={2}
-                      sx={{ maxWidth: 1000 }}
-                    >
-                      <CardContent>
-                        <div id="postulantesForm">
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "start",
-                              alignItems: "start",
-                              gap: 50,
-                              border: "1px solid" + deepPurple[400],
-                              borderRadius: 4,
-                              padding: "30px 15px",
-                            }}
-                          >
-                            <div className="row gap-3 d-flex justify-content-between">
-                              <div className="col-md-4">
-                                <SimpleInput
-                                  label="Postulante"
-                                  tooltip="Corresponde a los postulantes inscriptos en el concurso. Ingresar Apellido Nombre(DNInúmerodedni);Ej : Perez Juan (DNI25333788)"
-                                  register={register}
-                                  name="postulante"
-                                />
-                              </div>
-                              <div className="col-md-6 col-sm-12">
-                                <Controller
-                                  control={control}
-                                  name="asignaturaPostulada"
-                                  defaultValue={asignaturasData[0]}
-                                  render={({
-                                    field: { ref, onChange, ...field },
-                                  }) => (
-                                    <Autocomplete
-                                      disablePortal
-                                      defaultValue={null}
-                                      noOptionsText="Sin resultados"
-                                      options={asignaturasData}
-                                      isOptionEqualToValue={(option, value) =>
-                                        option.label === value.label
-                                      }
-                                      onChange={(_, data) =>
-                                        data &&
-                                        onChange(`${data.id} - ${data.label}`)
-                                      }
-                                      renderInput={(params) => (
-                                        <TextField
-                                          {...params}
-                                          {...field}
-                                          inputRef={ref}
-                                          sx={{
-                                            textTransform: "capitalize",
-                                            minWidth: 250,
-                                          }}
-                                          variant="outlined"
-                                          name="aa"
-                                          label="Asignatura"
-                                        />
-                                      )}
-                                    />
-                                  )}
-                                />
-                              </div>
-                              <div className="col-md-2">
-                                <Button
-                                  sx={{
-                                    whiteSpace: "nowrap",
-                                  }}
-                                  onClick={handleAgregarPostulante}
-                                  variant="outlined"
-                                  type="button"
-                                >
-                                  <Add /> Agregar Postulante
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                      {/* Asignatura */}
 
-                        {/* Postulantes agregados */}
-                        {postulantesAgregados &&
-                          postulantesAgregados.length > 0 && (
-                            <ScrollContainer
-                              style={{
-                                marginTop: 15,
-                                padding: "10px 0",
-                                borderRadius: 4,
-                                border: `1px solid ${deepPurple[600]} `,
-                              }}
-                              className="scroll-container"
-                            >
-                              <Stack
-                                spacing={2}
-                                direction="row"
-                                style={{ padding: "0 10px" }}
-                              >
-                                {postulantesAgregados.map((el, i) => (
-                                  <Chip
-                                    key={i}
-                                    label={
-                                      <>
-                                        {capitalize(el["postulante"])} -{" "}
-                                        {capitalize(
-                                          el["asignaturaPostulada"].asignatura
-                                        )}
-                                      </>
-                                    }
-                                    onDelete={() => handleDeletePostulante(el)}
-                                  />
-                                ))}
-                              </Stack>
-                            </ScrollContainer>
-                          )}
-                      </CardContent>
-                    </Card>
-
-                    {/* Comision Asesora */}
-                    <Card
-                      variant="elevation"
-                      elevation={2}
-                      sx={{ maxWidth: 1000 }}
-                    >
-                      <CardContent>
-                        <div id="comisionAsesoraForm">
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 30,
-                              border: "1px solid" + deepPurple[400],
-                              borderRadius: 4,
-                              padding: "30px 15px",
-                            }}
-                          >
-                            <div className="row gap-3">
-                              <div className="col-md-8">
-                                <SimpleInput
-                                  label="Comisión Asesora"
-                                  /* helperText={
-                                errors.asignatura &&
-                                "Ingrese al menos una asignatura"
-                              } */
-                                  tooltip="Corresponde ingresar los jurados que participaron en el concurso."
-                                  //error={Boolean(errors.asignatura)}
-                                  register={register}
-                                  name="comisionAsesora"
-                                />
-                              </div>
-                              <div className="col-md-4">
-                                <Button
-                                  sx={{
-                                    whiteSpace: "nowrap",
-                                  }}
-                                  onClick={handleAgregarJurado}
-                                  variant="outlined"
-                                  type="button"
-                                >
-                                  <Add /> Agregar Jurado
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Jurados agregados */}
-                        {juradosAgregados && juradosAgregados.length > 0 && (
-                          <ScrollContainer
-                            style={{
-                              marginTop: 15,
-                              padding: "10px 0",
-                              borderRadius: 4,
-                              border: `1px solid ${deepPurple[600]} `,
-                            }}
-                            className="scroll-container"
-                          >
-                            <Stack
-                              spacing={2}
-                              direction="row"
-                              style={{ padding: "0 10px" }}
-                            >
-                              {juradosAgregados.map((el, i) => (
-                                <Chip
-                                  key={i}
-                                  label={capitalize(el["jurado"])}
-                                  onDelete={() => handleDeleteJurado(el)}
-                                />
-                              ))}
-                            </Stack>
-                          </ScrollContainer>
-                        )}
-                      </CardContent>
-                    </Card>
-
-                    {/* Seleccionados */}
-                    <Card
-                      variant="elevation"
-                      elevation={2}
-                      sx={{ maxWidth: 1000 }}
-                    >
-                      <CardContent>
-                        <div id="asignaturaForm">
-                          <div
-                            style={{
-                              border: "1px solid" + deepPurple[400],
-                              borderRadius: 4,
-                              padding: "15px",
-                              margin: 0,
-                            }}
-                          >
-                            <span className="d-flex gap-3">
-                              <span className="d-flex align-items-top gap-3">
-                                <Controller
-                                  control={control}
-                                  name="seleccionados"
-                                  defaultValue={postulantesData[0]}
-                                  render={({
-                                    field: { ref, onChange, ...field },
-                                  }) => (
-                                    <Autocomplete
-                                      disablePortal
-                                      defaultValue={null}
-                                      noOptionsText="Sin resultados"
-                                      options={postulantesData}
-                                      sx={{ width: 300 }}
-                                      isOptionEqualToValue={(option, value) =>
-                                        option.label === value.label
-                                      }
-                                      onChange={(_, data) =>
-                                        data && onChange(data.label)
-                                      }
-                                      renderInput={(params) => (
-                                        <TextField
-                                          {...params}
-                                          {...field}
-                                          inputRef={ref}
-                                          required
-                                          error={Boolean(errors.seleccionados)}
-                                          InputLabelProps={{ required: false }}
-                                          variant="outlined"
-                                          label="Seleccionados"
-                                          helperText={`Cargos a cubrir: ${
-                                            cantidadCargos || ""
-                                          }`}
-                                        />
-                                      )}
-                                    />
-                                  )}
-                                />
-                                <FieldTooltip title="Corresponde a los candidatos seleccionados. El orden de mérito debe respetarse en la lista, el primero corresponde al primer orden, el segundo al siguiente y así sucesivamente" />
-                              </span>
-
-                              {/* Si el dictamen esta en disidencia */}
-                              {dictamenDisidencia && (
-                                <Controller
-                                  control={control}
-                                  name="juradoDisidente"
-                                  defaultValue={juradosData[0]}
-                                  render={({
-                                    field: { ref, onChange, ...field },
-                                  }) => (
-                                    <Autocomplete
-                                      disablePortal
-                                      defaultValue={null}
-                                      noOptionsText="Sin reysultados"
-                                      options={juradosData}
-                                      sx={{ width: 300 }}
-                                      isOptionEqualToValue={(option, value) =>
-                                        option.label === value.label
-                                      }
-                                      onChange={(_, data) => {
-                                        data && onChange(data.label);
-                                        setPosicionSeleccionado(1);
-                                      }}
-                                      renderInput={(params) => (
-                                        <TextField
-                                          {...params}
-                                          {...field}
-                                          inputRef={ref}
-                                          /* required
-                                            error={Boolean(
-                                              errors.seleccionados
-                                            )}
-                                            InputLabelProps={{
-                                              required: false,
-                                            }} */
-                                          variant="outlined"
-                                          label="Jurado"
-                                        />
-                                      )}
-                                    />
-                                  )}
-                                />
-                              )}
-
-                              <div className="text-center">
-                                {!cantidadCargos ? (
-                                  <p>Ingrese la cantidad de cargos</p>
-                                ) : (
-                                  <>
-                                    <small>Orden de mérito</small>
-
-                                    <span className="d-flex align-items-center justify-content-between gap-2">
-                                      <Button
-                                        variant="outlined"
-                                        onClick={() =>
-                                          posicionSeleccionado !== 1 &&
-                                          setPosicionSeleccionado(
-                                            posicionSeleccionado - 1
-                                          )
-                                        }
-                                        disabled={
-                                          posicionSeleccionado === 1 ||
-                                          seleccionadosAgregados.length ===
-                                            cantidadCargos
-                                        }
-                                        size="small"
-                                      >
-                                        -
-                                      </Button>
-
-                                      <p style={{ whiteSpace: "nowrap" }}>
-                                        Nº{" "}
-                                        {posicionSeleccionado > cantidadCargos
-                                          ? cantidadCargos
-                                          : posicionSeleccionado}
-                                      </p>
-                                      <Button
-                                        variant="outlined"
-                                        onClick={() =>
-                                          posicionSeleccionado !==
-                                            parseInt(cantidadCargos) &&
-                                          setPosicionSeleccionado(
-                                            posicionSeleccionado + 1
-                                          )
-                                        }
-                                        disabled={
-                                          posicionSeleccionado >=
-                                          parseInt(cantidadCargos)
-                                        }
-                                        size="small"
-                                      >
-                                        +
-                                      </Button>
-                                    </span>
-                                  </>
-                                )}
-                              </div>
-                            </span>
-                            {/* Checkbox */}
+                      <Card
+                        variant="elevation"
+                        elevation={2}
+                        sx={{ maxWidth: 935 }}
+                      >
+                        <CardContent>
+                          <div id="asignaturaForm">
                             <div
                               style={{
-                                display: "flex",
-                                flexWrap: "wrap",
-                                alignItems: "center",
-                                justifyContent: "start",
-                                gap: "20px",
-                                width: "100%",
+                                border: "1px solid" + deepPurple[400],
+                                borderRadius: 4,
+                                padding: "15px",
+                                margin: 0,
                               }}
                             >
+                              <SimpleInput
+                                label="Asignatura"
+                                placeholder="Ej: Literatura Y Cultura Latinoamericanas I"
+                                tooltip="Corresponde a la asignatura indicada en el llamado. Se debe indicar el nombre completo. Ej: Literatura Y Cultura Latinoamericanas I"
+                                register={register}
+                                name="asignatura"
+                              />
+
                               <div
-                                className="col-md-5"
                                 style={{
-                                  backgroundColor: deepPurple[50],
-                                  padding: "7.5px 10px",
-                                  borderRadius: 4,
-                                  width: 300,
-                                  marginTop: 15,
                                   display: "flex",
+                                  flexWrap: "wrap",
                                   alignItems: "center",
-                                  justifyContent: "space-between",
+                                  justifyContent: "start",
+                                  gap: "20px",
+                                  width: "100%",
                                 }}
                               >
-                                <FormControlLabel
-                                  control={
-                                    <Checkbox
-                                      sx={{
-                                        color: deepPurple[800],
-                                        "&.Mui-checked": {
-                                          color: deepPurple[600],
-                                        },
-                                      }}
-                                      onChange={handleDictamenDisidencia}
-                                      checked={dictamenDisidencia}
-                                    />
-                                  }
-                                  label={
-                                    <>
-                                      <span
-                                        style={{
-                                          display: "flex",
-                                          gap: 15,
-                                          fontSize: "14px",
-                                          alignItems: "center",
-                                        }}
-                                      >
-                                        Dictamen en disidencia
-                                        <SafetyDividerOutlinedIcon color="primary" />
-                                      </span>
-                                    </>
-                                  }
-                                />
-                              </div>
-
-                              <div className="col-md-4">
-                                <Button
-                                  sx={{
-                                    whiteSpace: "nowrap",
-                                  }}
-                                  onClick={handleAgregarSeleccionado}
-                                  variant="outlined"
-                                  type="button"
-                                  /*  disabled={
-                                    parseInt(posicionSeleccionado) >=
-                                      parseInt(cantidadCargos) + 1 ||
-                                    (!dictamenDisidencia &&
-                                      seleccionadosAgregados.length >
-                                        cantidadCargos) ||
-                                    !cantidadCargos
-                                  } */
-                                >
-                                  {parseInt(posicionSeleccionado) >=
-                                    parseInt(cantidadCargos) + 1 ||
-                                  (!dictamenDisidencia &&
-                                    seleccionadosAgregados.length >
-                                      cantidadCargos) ? (
-                                    <>
-                                      <span className="mx-2" /> Cargos cubiertos
-                                    </>
-                                  ) : !cantidadCargos ? (
-                                    "Cantidad de cargos"
-                                  ) : (
-                                    <>
-                                      <Add />
-                                      Agregar seleccionado
-                                    </>
-                                  )}
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Seleccionados Agregados */}
-
-                        {seleccionadosAgregados &&
-                          seleccionadosAgregados.length > 0 && (
-                            <div className="row">
-                              {Object.entries(juradosD).map(
-                                ([key, value], i) => (
-                                  <div className="col" key={i}>
-                                    <ScrollContainer
-                                      style={{
-                                        marginTop: 15,
-                                        padding: "10px 0",
-                                        borderRadius: 4,
-                                        border: `1px solid ${deepPurple[600]} `,
-                                      }}
-                                      className="scroll-container"
-                                    >
-                                      <p className="text-center text-capitalize">
-                                        {value[0].jurado}
-                                      </p>
-
-                                      {value.map((el) => (
-                                        <Stack
-                                          spacing={2}
-                                          style={{ padding: "5px 10px" }}
-                                        >
-                                          <Chip
-                                            key={i}
-                                            label={
-                                              <span>
-                                                {el.posicion}º -{" "}
-                                                {capitalize(el.seleccionado)}
-                                              </span>
-                                            }
-                                            onDelete={() =>
-                                              handleDeleteSeleccionado(el)
-                                            }
-                                          />
-                                        </Stack>
-                                      ))}
-                                      {/* <Stack
-                                        spacing={2}
-                                        style={{ padding: "0 10px" }}
-                                      >
-                                        {value[0].jurado === null ? (
-                                          <Chip
-                                            key={i}
-                                            label={
-                                              <span
-                                                style={{
-                                                  display: "flex",
-                                                  gap: 15,
-                                                  fontSize: "14px",
-                                                  alignItems: "center",
-                                                }}
-                                              >
-                                                {value[0].posicion}º -{" "}
-                                                {capitalize(
-                                                  value[0].seleccionado
-                                                )}
-                                                <SafetyDividerOutlinedIcon color="primary" />
-                                                {value[0].jurado &&
-                                                  capitalize(value[0].jurado)}
-                                              </span>
-                                            }
-                                            onDelete={() =>
-                                              handleDeleteSeleccionado(value[0])
-                                            }
-                                          />
-                                        ) : (
-                                          <Chip
-                                            key={i}
-                                            label={
-                                              <span>
-                                                {value[0].posicion}º -{" "}
-                                                {capitalize(
-                                                  value[0].seleccionado
-                                                )}
-                                              </span>
-                                            }
-                                            onDelete={() =>
-                                              handleDeleteSeleccionado(value[0])
-                                            }
-                                          />
-                                        )}
-                                      </Stack> */}
-                                    </ScrollContainer>
-                                  </div>
-                                )
-                              )}
-                            </div>
-                          )}
-                      </CardContent>
-                    </Card>
-
-                    {/* Sustanciado - Fecha de Sustanciado */}
-                    <Card
-                      variant="elevation"
-                      elevation={2}
-                      sx={{ maxWidth: 1000 }}
-                    >
-                      <CardContent>
-                        <div id="asignaturaForm">
-                          <div
-                            style={{
-                              border: "1px solid" + deepPurple[400],
-                              borderRadius: 4,
-                              padding: "15px",
-                              margin: 0,
-                            }}
-                          >
-                            <div
-                              style={{
-                                display: "flex",
-                                flexWrap: "wrap",
-                                alignItems: "center",
-                                justifyContent: "start",
-                                gap: 30,
-                                width: "100%",
-                              }}
-                            >
-                              <span className="d-flex align-items-top gap-3">
                                 <div
-                                  className="col-md-6"
+                                  className="col-md-5"
                                   style={{
                                     backgroundColor: deepPurple[50],
                                     padding: "7.5px 10px",
                                     borderRadius: 4,
-                                    minWidth: 300,
+                                    margin: "8px 0",
                                     display: "flex",
                                     alignItems: "center",
                                     justifyContent: "space-between",
@@ -1714,286 +757,1181 @@ function App() {
                                           },
                                         }}
                                         onChange={() =>
-                                          setMostrarFechaSustanciado(
-                                            !mostrarFechaSustanciado
-                                          )
+                                          setConExtension(!conExtension)
                                         }
-                                        checked={mostrarFechaSustanciado}
+                                        checked={conExtension}
                                       />
                                     }
-                                    label={"Sustanciado"}
+                                    label={
+                                      <>
+                                        <span
+                                          style={{
+                                            display: "flex",
+                                            gap: 15,
+                                            fontSize: "14px",
+                                            alignItems: "center",
+                                          }}
+                                        >
+                                          Extensión de funciones docentes en
+                                          otra asignatura
+                                          <Share color="primary" />
+                                        </span>
+                                      </>
+                                    }
                                   />
                                 </div>
-                                <FieldTooltip title="Corresponde a la fecha en que se archiva expediente del concurso." />
-                              </span>
-                              {/* Fecha de Sustanciado */}
-                              {mostrarFechaSustanciado && (
-                                <div className="col-md-6">
-                                  <span className="d-flex align-items-top gap-3">
-                                    <Controller
-                                      name="fechaSustanciado"
-                                      control={control}
-                                      render={({
-                                        field: { onChange, ...restField },
-                                      }) => (
-                                        <LocalizationProvider
-                                          dateAdapter={AdapterDateFns}
-                                        >
-                                          <DesktopDatePicker
-                                            sx={{ minWidth: 300 }}
-                                            label="Fecha de Sustanciado"
-                                            onChange={(event) => {
-                                              onChange(event);
-                                              setFechaSustanciado(event);
-                                            }}
-                                            value={fechaSustanciado || ""}
-                                            {...restField}
-                                          />
-                                        </LocalizationProvider>
-                                      )}
-                                    />
-                                    <FieldTooltip title="Corresponde a la fecha en la que se sustanció el concurso." />
-                                  </span>
+
+                                <div className="col-md-4">
+                                  <Button
+                                    sx={{
+                                      whiteSpace: "nowrap",
+                                    }}
+                                    onClick={handleAgregarAsignatura}
+                                    variant="outlined"
+                                    type="button"
+                                  >
+                                    <Add /> Agregar Asignatura
+                                  </Button>
                                 </div>
-                              )}
+                              </div>
                             </div>
                           </div>
+
+                          {asignaturasAgregadas &&
+                            asignaturasAgregadas.length > 0 && (
+                              <div
+                                style={{
+                                  marginTop: 15,
+                                  padding: "10px 0",
+                                  borderRadius: 4,
+                                  border: `1px solid ${deepPurple[600]} `,
+                                  overflow: "hidden",
+                                }}
+                              >
+                                <Stack
+                                  spacing={2}
+                                  direction="row"
+                                  style={{
+                                    padding: "10px",
+                                    overflowX: "auto",
+                                  }}
+                                >
+                                  {asignaturasAgregadas.map((el, i) =>
+                                    el.conExtension ? (
+                                      <Chip
+                                        key={i}
+                                        label={
+                                          <span
+                                            style={{
+                                              display: "flex",
+                                              gap: 15,
+                                              fontSize: "14px",
+                                              alignItems: "center",
+                                            }}
+                                          >
+                                            <Share color="primary" />
+                                            {capitalize(el["asignatura"])}
+                                          </span>
+                                        }
+                                        onDelete={() =>
+                                          handleDeleteAsignatura(el)
+                                        }
+                                      />
+                                    ) : (
+                                      <Chip
+                                        key={i}
+                                        label={capitalize(el["asignatura"])}
+                                        onDelete={() =>
+                                          handleDeleteAsignatura(el)
+                                        }
+                                      />
+                                    )
+                                  )}
+                                </Stack>
+                              </div>
+                            )}
+                        </CardContent>
+                      </Card>
+
+                      <div className="row align-items-start justify-content-between d-flex gap-3 my-3">
+                        {/* Fecha de Publicación */}
+                        <div className="col-sm-12 col-md-6 col-lg-6 col-xl-4 d-flex flex-column gap-3">
+                          <span className="d-flex align-items-top gap-3">
+                            <Controller
+                              name="fechaPublicacion"
+                              defaultValue={fechaPublicacion}
+                              control={control}
+                              render={({
+                                field: { onChange, ...restField },
+                              }) => (
+                                <LocalizationProvider
+                                  dateAdapter={AdapterDateFns}
+                                >
+                                  <DesktopDatePicker
+                                    sx={{ minWidth: 300 }}
+                                    label="Fecha de Publicación"
+                                    onChange={(event) => {
+                                      onChange(event);
+                                      setFechaPublicacion(event);
+                                    }}
+                                    {...restField}
+                                  />
+                                </LocalizationProvider>
+                              )}
+                            />
+                            <FieldTooltip title="Corresponde a la fecha en la que se publica el llamado." />
+                          </span>
+
+                          {/* Expediente Llamado */}
+                          <SimpleInput
+                            label="Expediente Llamado Nº"
+                            placeholder="Ej: 7-0756/16"
+                            helperText={
+                              errors.expedienteLlamado &&
+                              "Ingrese un N° de expediente"
+                            }
+                            tooltip="Corresponde al N° de expediente administrativo del llamado, se ingresa como figura en el expediente. Ej: 7-3664/14"
+                            error={Boolean(errors.expedienteLlamado)}
+                            register={register}
+                            name="expedienteLlamado"
+                            required
+                          />
+
+                          {/* Dedicación */}
+                          <span className="d-flex align-items-top gap-3 ">
+                            <TextField
+                              select
+                              sx={{ minWidth: 300 }}
+                              label="Dedicación"
+                              defaultValue=""
+                              inputProps={register("dedicacion", {
+                                required: "Ingrese una dedicación",
+                              })}
+                              error={Boolean(errors.dedicacion)}
+                              helperText={errors.dedicacion?.message}
+                            >
+                              {[
+                                { label: "Simple", id: "1" },
+                                { label: "Exclusiva", id: "2" },
+                                { label: "Completa", id: "3" },
+                                { label: "Parcial", id: "4" },
+                              ].map((option) => (
+                                <MenuItem key={option.id} value={option.id}>
+                                  {option.label}
+                                </MenuItem>
+                              ))}
+                            </TextField>
+                            <FieldTooltip title="Corresponde a la dedicación requerida." />
+                          </span>
+
+                          {/* Dedicacion simple - 3 opciones */}
+                          {mostrarInvestigacion &&
+                            mostrarInvestigacion !== "1" && (
+                              <Controller
+                                name="dedicacionOption"
+                                control={control}
+                                defaultValue={1}
+                                rules={{ required: true }}
+                                render={({ field }) => (
+                                  <RadioGroup
+                                    {...field}
+                                    style={{ marginLeft: 10 }}
+                                  >
+                                    {dedicacionNoSimpleOptions.map((option) => (
+                                      <FormControlLabel
+                                        key={option.value}
+                                        value={option.value}
+                                        control={<Radio />}
+                                        label={option.label}
+                                      />
+                                    ))}
+                                  </RadioGroup>
+                                )}
+                              />
+                            )}
                         </div>
-                      </CardContent>
-                    </Card>
 
-                    <div className="row d-flex justify-content-between gap-3 mt-3">
-                      <div className="col-sm-12 col-md-6 col-lg-6 col-xl-4 d-flex flex-column gap-3">
-                        {/* Recusaciones  */}
-                        <SimpleInput
-                          label="Recusaciones"
-                          tooltip="Corresponde completar cuado hay recusaciones o exusaciones de jurados"
-                          error={Boolean(errors.recusaciones)}
-                          register={register}
-                          name="recusaciones"
-                        />
-                        {/* Fecha de Pase a Archivo */}
-                        <span className="d-flex align-items-top gap-3">
-                          <Controller
-                            name="fechaPaseArchivo"
-                            control={control}
-                            render={({ field: { onChange, ...restField } }) => (
-                              <LocalizationProvider
-                                dateAdapter={AdapterDateFns}
-                              >
-                                <DesktopDatePicker
+                        {/* OCA */}
+                        <div className="col-sm-12 col-md-6 col-lg-5 d-flex flex-column gap-3">
+                          <SimpleInput
+                            label="OCA Nº"
+                            placeholder="Ej: 1544/18"
+                            helperText={errors.oca && "Ingrese un N° de OCA"}
+                            tooltip="Corresponde al N° de OCA de la ordenanza, se ingresa como figura en la ordenanza. Ej: 2879/15"
+                            error={Boolean(errors.oca)}
+                            register={register}
+                            name="oca"
+                            required
+                          />
+
+                          {/* Fecha de Cierre */}
+                          <span className="d-flex align-items-top gap-3">
+                            <Controller
+                              name="fechaCierre"
+                              defaultValue={fechaCierre}
+                              control={control}
+                              render={({
+                                field: { onChange, ...restField },
+                              }) => (
+                                <LocalizationProvider
+                                  dateAdapter={AdapterDateFns}
+                                >
+                                  <DesktopDatePicker
+                                    sx={{ minWidth: 300 }}
+                                    label="Fecha de Cierre"
+                                    onChange={(event) => {
+                                      onChange(event);
+                                      setFechaCierre(event);
+                                    }}
+                                    {...restField}
+                                  />
+                                </LocalizationProvider>
+                              )}
+                            />
+                            <FieldTooltip title="Corresponde a la fecha del cierre del concurso." />
+                          </span>
+
+                          {/* Expediente Concurso  */}
+                          <SimpleInput
+                            label="Expediente de Concurso Nº"
+                            placeholder="Ej: 7-2183/18"
+                            helperText={
+                              errors.expedienteConcurso &&
+                              "Ingrese un N° expediente"
+                            }
+                            tooltip="Corresponde al N° de expediente administrativo del concurso, se ingresa como figura en el expediente. Ej: 7-3664/14"
+                            error={Boolean(errors.expedienteConcurso)}
+                            register={register}
+                            name="expedienteConcurso"
+                          />
+                          {/* Cargo */}
+                          <span className="d-flex align-items-top gap-3">
+                            <Controller
+                              control={control}
+                              name="cargo"
+                              defaultValue={cargosData[0]}
+                              render={({
+                                field: { ref, onChange, ...field },
+                              }) => (
+                                <Autocomplete
+                                  disablePortal
+                                  defaultValue={null}
+                                  noOptionsText="Sin resultados"
+                                  options={cargosData}
                                   sx={{ minWidth: 300 }}
-                                  label="Fecha de Pase a Archivo"
-                                  onChange={(event) => {
-                                    onChange(event);
-                                    setFechaPaseArchivo(event);
-                                  }}
-                                  value={fechaPaseArchivo || ""}
-                                  {...restField}
-                                />
-                              </LocalizationProvider>
-                            )}
-                          />
-                          <FieldTooltip title="Corresponde a la fecha en que se archiva expediente del concurso." />
-                        </span>
-
-                        {/* OCA Designacion */}
-                        <SimpleInput
-                          label="OCA Designación Nº"
-                          placeholder="Ej: 1544/18"
-                          helperText={
-                            errors.ocaDesignacion &&
-                            "Ingrese un N° de Designación de OCA"
-                          }
-                          tooltip="Corresponde al N° de OCA, se ingresa como figura en la ordenanza. Ej: 2879/15"
-                          error={Boolean(errors.ocaDesignacion)}
-                          register={register}
-                          name="ocaDesignacion"
-                          required
-                        />
-                      </div>
-
-                      <div className="col-sm-12 col-md-6 col-lg-5 d-flex flex-column gap-3 mb-3">
-                        {/* Fecha de Designación */}
-                        <span className="d-flex align-items-top gap-3">
-                          <Controller
-                            name="fechaDesignacion"
-                            control={control}
-                            render={({ field: { onChange, ...restField } }) => (
-                              <LocalizationProvider
-                                dateAdapter={AdapterDateFns}
-                              >
-                                <DesktopDatePicker
-                                  sx={{ minWidth: 300 }}
-                                  label="Fecha de Designación"
-                                  onChange={(event) => {
-                                    onChange(event);
-                                    setFechaDesignacion(event);
-                                  }}
-                                  value={fechaDesignacion || ""}
-                                  {...restField}
-                                />
-                              </LocalizationProvider>
-                            )}
-                          />
-                          <FieldTooltip title="Corresponde a la fecha de la designación del docente." />
-                        </span>
-
-                        {/* Observaciones */}
-                        <span className="d-flex align-items-top gap-3">
-                          <TextareaAutosize
-                            className="textArea"
-                            placeholder="Observaciones"
-                            {...register("observaciones")}
-                            name="observaciones"
-                            style={{
-                              minWidth: 300,
-                              borderRadius: 4,
-                              borderColor: "#c4c4c4",
-                              padding: 15,
-                            }}
-                            minRows={3}
-                          />
-                          <FieldTooltip title="Corresponde a otros datos que se consideren necesarios." />
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Designados*/}
-                    <Card
-                      variant="elevation"
-                      elevation={2}
-                      sx={{ maxWidth: 1000 }}
-                    >
-                      <CardContent>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 30,
-                            border: "1px solid" + deepPurple[400],
-                            borderRadius: 4,
-                            padding: "30px 15px",
-                          }}
-                        >
-                          <div className="row gap-3">
-                            <span className="d-flex">
-                              <div className="col-md-6">
-                                <Controller
-                                  control={control}
-                                  name="designados"
-                                  defaultValue={postulantesData[0]}
-                                  render={({
-                                    field: { ref, onChange, ...field },
-                                  }) => (
-                                    <Autocomplete
-                                      disablePortal
-                                      defaultValue={null}
-                                      noOptionsText="Sin resultados"
-                                      options={postulantesData}
-                                      sx={{ width: 300 }}
-                                      isOptionEqualToValue={(option, value) =>
-                                        option.label === value.label
-                                      }
-                                      onChange={(_, data) =>
-                                        data && onChange(data.label)
-                                      }
-                                      renderInput={(params) => (
-                                        <TextField
-                                          {...params}
-                                          {...field}
-                                          inputRef={ref}
-                                          variant="outlined"
-                                          label="Designados"
-                                        />
-                                      )}
+                                  isOptionEqualToValue={(option, value) =>
+                                    option.label === value.label
+                                  }
+                                  onChange={(_, data) =>
+                                    data && onChange(data.id)
+                                  }
+                                  renderInput={(params) => (
+                                    <TextField
+                                      {...params}
+                                      {...field}
+                                      inputRef={ref}
+                                      error={Boolean(errors.cargo)}
+                                      required
+                                      InputLabelProps={{ required: false }}
+                                      variant="outlined"
+                                      label="Cargo"
                                     />
                                   )}
                                 />
-                              </div>
-                              <div className="col-md-4">
-                                <div className="d-flex flex-column align-items-center">
-                                  <small htmlFor="">Orden de mérito </small>
-                                  <p>Nº {posicionDesignado}</p>
+                              )}
+                            />
+                            <FieldTooltip title="Corresponde al cargo docente requerido." />
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Postulantes */}
+                      <Card
+                        variant="elevation"
+                        elevation={2}
+                        sx={{ maxWidth: 935 }}
+                      >
+                        <CardContent>
+                          <div id="postulantesForm">
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "start",
+                                alignItems: "start",
+                                gap: 50,
+                                border: "1px solid" + deepPurple[400],
+                                borderRadius: 4,
+                                padding: "30px 15px",
+                              }}
+                            >
+                              <div className="row gap-3 d-flex justify-content-between">
+                                <div className="col-md-4">
+                                  <SimpleInput
+                                    label="Postulante"
+                                    tooltip="Corresponde a los postulantes inscriptos en el concurso. Ingresar Apellido Nombre(DNInúmerodedni);Ej : Perez Juan (DNI25333788)"
+                                    register={register}
+                                    name="postulante"
+                                  />
                                 </div>
-                              </div>
-                            </span>
-                            <div className="row">
-                              <div className="col-md-4">
-                                <Button
-                                  sx={{
-                                    whiteSpace: "nowrap",
-                                  }}
-                                  onClick={handleAgregarDesignado}
-                                  variant="outlined"
-                                  type="button"
-                                >
-                                  <Add /> Agregar Designado
-                                </Button>
+                                <div className="col-md-6 col-sm-12">
+                                  <Controller
+                                    control={control}
+                                    name="asignaturaPostulada"
+                                    defaultValue={asignaturasData[0]}
+                                    render={({
+                                      field: { ref, onChange, ...field },
+                                    }) => (
+                                      <Autocomplete
+                                        disablePortal
+                                        defaultValue={null}
+                                        noOptionsText="Sin resultados"
+                                        options={asignaturasData}
+                                        isOptionEqualToValue={(option, value) =>
+                                          option.label === value.label
+                                        }
+                                        onChange={(_, data) =>
+                                          data &&
+                                          onChange(`${data.id} - ${data.label}`)
+                                        }
+                                        renderInput={(params) => (
+                                          <TextField
+                                            {...params}
+                                            {...field}
+                                            inputRef={ref}
+                                            sx={{
+                                              textTransform: "capitalize",
+                                              minWidth: 250,
+                                            }}
+                                            variant="outlined"
+                                            name="aa"
+                                            label="Asignatura"
+                                          />
+                                        )}
+                                      />
+                                    )}
+                                  />
+                                </div>
+                                <div className="col-md-2">
+                                  <Button
+                                    sx={{
+                                      whiteSpace: "nowrap",
+                                    }}
+                                    onClick={handleAgregarPostulante}
+                                    variant="outlined"
+                                    type="button"
+                                  >
+                                    <Add /> Agregar Postulante
+                                  </Button>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
 
-                        {/* Designados agregados */}
-                        {designadosAgregados &&
-                          designadosAgregados.length > 0 && (
-                            <ScrollContainer
+                          {/* Postulantes agregados */}
+                          {postulantesAgregados &&
+                            postulantesAgregados.length > 0 && (
+                              <div
+                                style={{
+                                  marginTop: 15,
+                                  borderRadius: 4,
+                                  border: `1px solid ${deepPurple[600]} `,
+                                  padding: "10px",
+                                  overflowX: "auto",
+                                }}
+                              >
+                                <Stack
+                                  spacing={2}
+                                  direction="row"
+                                  style={{ padding: "0 10px" }}
+                                >
+                                  {postulantesAgregados.map((el, i) => (
+                                    <Chip
+                                      key={i}
+                                      label={
+                                        <>
+                                          {capitalize(el["postulante"])} -{" "}
+                                          {capitalize(
+                                            el["asignaturaPostulada"].asignatura
+                                          )}
+                                        </>
+                                      }
+                                      onDelete={() =>
+                                        handleDeletePostulante(el)
+                                      }
+                                    />
+                                  ))}
+                                </Stack>
+                              </div>
+                            )}
+                        </CardContent>
+                      </Card>
+
+                      {/* Comision Asesora */}
+                      <Card
+                        variant="elevation"
+                        elevation={2}
+                        sx={{ maxWidth: 935 }}
+                      >
+                        <CardContent>
+                          <div id="comisionAsesoraForm">
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 30,
+                                border: "1px solid" + deepPurple[400],
+                                borderRadius: 4,
+                                padding: "30px 15px",
+                              }}
+                            >
+                              <div className="row gap-3">
+                                <div className="col-md-8">
+                                  <SimpleInput
+                                    label="Comisión Asesora"
+                                    /* helperText={
+                                errors.asignatura &&
+                                "Ingrese al menos una asignatura"
+                              } */
+                                    tooltip="Corresponde ingresar los jurados que participaron en el concurso."
+                                    //error={Boolean(errors.asignatura)}
+                                    register={register}
+                                    name="comisionAsesora"
+                                  />
+                                </div>
+                                <div className="col-md-4">
+                                  <Button
+                                    sx={{
+                                      whiteSpace: "nowrap",
+                                    }}
+                                    onClick={handleAgregarJurado}
+                                    variant="outlined"
+                                    type="button"
+                                  >
+                                    <Add /> Agregar Jurado
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Jurados agregados */}
+                          {juradosAgregados && juradosAgregados.length > 0 && (
+                            <div
                               style={{
                                 marginTop: 15,
-                                padding: "10px 0",
                                 borderRadius: 4,
                                 border: `1px solid ${deepPurple[600]} `,
+                                padding: "10px",
+                                overflowX: "auto",
                               }}
-                              className="scroll-container"
                             >
                               <Stack
                                 spacing={2}
                                 direction="row"
                                 style={{ padding: "0 10px" }}
                               >
-                                {designadosAgregados.map((el, i) => (
+                                {juradosAgregados.map((el, i) => (
                                   <Chip
                                     key={i}
-                                    label={`${el["posicion"]}º - ${capitalize(
-                                      el["designado"]
-                                    )} `}
-                                    onDelete={() => handleDeleteDesignado(el)}
+                                    label={capitalize(el["jurado"])}
+                                    onDelete={() => handleDeleteJurado(el)}
                                   />
                                 ))}
                               </Stack>
-                            </ScrollContainer>
+                            </div>
                           )}
-                      </CardContent>
-                    </Card>
+                        </CardContent>
+                      </Card>
 
-                    {/* Finalizar formulario */}
-                    {!isLoading ? (
-                      <Button
-                        startIcon={<Save />}
-                        variant="outlined"
-                        size="large"
-                        onClick={handleSubmit(handleFinalizarFormulario)}
+                      <div className="row align-items-center justify-content-between d-flex gap-3 my-3">
+                        {/* Cantidad de cargos */}
+                        <div className="col-sm-12 col-md-6 col-lg-6 col-xl-4 d-flex flex-column gap-3">
+                          <SimpleInput
+                            label="Cantidad de Cargos"
+                            placeholder="Máximo: 11"
+                            helperText={
+                              errors.cantidadCargos &&
+                              "Cantidad de cargos mínimo: 1, máximo: 11"
+                            }
+                            tooltip="Se cargan la cantidad de cargos a concursar. Valor por defecto 1, máximo 11."
+                            error={Boolean(errors.cantidadCargos)}
+                            register={register}
+                            name="cantidadCargos"
+                            onChange={(e) => {
+                              const inputValue = parseInt(e.target.value, 10);
+                              const validNumbers = [
+                                1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+                              ];
+                              if (validNumbers.includes(inputValue)) {
+                                setValue(
+                                  "cantidadCargos",
+                                  inputValue.toString()
+                                );
+                                clearErrors("cantidadCargos");
+                              } else {
+                                setError("cantidadCargos", {
+                                  type: "manual",
+                                });
+                              }
+                            }}
+                            required
+                          />
+                        </div>
+                        {/* Recusaciones  */}
+                        <div className="col-sm-12 col-md-6 col-lg-5 d-flex flex-column gap-3">
+                          <SimpleInput
+                            label="Recusaciones"
+                            tooltip="Corresponde completar cuado hay recusaciones o exusaciones de jurados"
+                            error={Boolean(errors.recusaciones)}
+                            register={register}
+                            name="recusaciones"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Seleccionados */}
+                      <Card
+                        variant="elevation"
+                        elevation={2}
+                        sx={{ maxWidth: 935 }}
                       >
-                        Finalizar formulario
-                      </Button>
-                    ) : (
-                      <LoadingButton
-                        loading={isLoading}
-                        loadingPosition="start"
-                        startIcon={<Save />}
-                        variant="outlined"
-                        size="large"
-                        sx={{ backgroundColor: deepPurple[50] }}
+                        <CardContent>
+                          <div id="asignaturaForm">
+                            <div
+                              style={{
+                                border: "1px solid" + deepPurple[400],
+                                borderRadius: 4,
+                                padding: "15px",
+                                margin: 0,
+                              }}
+                            >
+                              <span className="d-flex gap-3">
+                                {dictamenDisidencia && (
+                                  <Controller
+                                    control={control}
+                                    name="juradoDisidente"
+                                    defaultValue={juradosData[0]}
+                                    render={({
+                                      field: { ref, onChange, ...field },
+                                    }) => (
+                                      <Autocomplete
+                                        disablePortal
+                                        defaultValue={null}
+                                        noOptionsText="Sin reysultados"
+                                        options={juradosData}
+                                        sx={{ width: 300 }}
+                                        isOptionEqualToValue={(option, value) =>
+                                          option.label === value.label
+                                        }
+                                        onChange={(_, data) => {
+                                          data && onChange(data.label);
+                                          setPosicionSeleccionado(1);
+                                        }}
+                                        renderInput={(params) => (
+                                          <TextField
+                                            {...params}
+                                            {...field}
+                                            inputRef={ref}
+                                            helperText={`Cargos a cubrir: ${
+                                              cantidadCargos || ""
+                                            }`}
+                                            /* required
+                                            error={Boolean(
+                                              errors.seleccionados
+                                            )}
+                                            InputLabelProps={{
+                                              required: false,
+                                            }} */
+                                            variant="outlined"
+                                            label="Jurado"
+                                          />
+                                        )}
+                                      />
+                                    )}
+                                  />
+                                )}
+
+                                <span className="d-flex align-items-top gap-3">
+                                  <Controller
+                                    control={control}
+                                    name="seleccionados"
+                                    defaultValue={postulantesData[0]}
+                                    render={({
+                                      field: { ref, onChange, ...field },
+                                    }) => (
+                                      <Autocomplete
+                                        disablePortal
+                                        defaultValue={null}
+                                        noOptionsText="Sin resultados"
+                                        options={postulantesData}
+                                        sx={{ width: 300 }}
+                                        isOptionEqualToValue={(option, value) =>
+                                          option.label === value.label
+                                        }
+                                        onChange={(_, data) =>
+                                          data && onChange(data.label)
+                                        }
+                                        renderInput={(params) => (
+                                          <TextField
+                                            {...params}
+                                            {...field}
+                                            inputRef={ref}
+                                            required
+                                            error={Boolean(
+                                              errors.seleccionados
+                                            )}
+                                            InputLabelProps={{
+                                              required: false,
+                                            }}
+                                            variant="outlined"
+                                            label="Seleccionados"
+                                          />
+                                        )}
+                                      />
+                                    )}
+                                  />
+                                  <FieldTooltip title="Corresponde a los candidatos seleccionados. El orden de mérito debe respetarse en la lista, el primero corresponde al primer orden, el segundo al siguiente y así sucesivamente" />
+                                </span>
+
+                                <div className="text-center">
+                                  {!cantidadCargos ? (
+                                    <p className="pt-3 text-muted">
+                                      Ingrese la cantidad de cargos
+                                    </p>
+                                  ) : (
+                                    <>
+                                      <small>Orden de mérito</small>
+
+                                      <span className="d-flex align-items-center justify-content-between gap-2">
+                                        <Button
+                                          variant="outlined"
+                                          onClick={() =>
+                                            posicionSeleccionado >= 1 &&
+                                            setPosicionSeleccionado(
+                                              posicionSeleccionado - 1
+                                            )
+                                          }
+                                          disabled={
+                                            posicionSeleccionado === 1 ||
+                                            seleccionadosAgregados.length >=
+                                              parseInt(cantidadCargos)
+                                          }
+                                          size="small"
+                                        >
+                                          -
+                                        </Button>
+
+                                        <p style={{ whiteSpace: "nowrap" }}>
+                                          Nº{" "}
+                                          {posicionSeleccionado > cantidadCargos
+                                            ? cantidadCargos
+                                            : posicionSeleccionado}
+                                        </p>
+                                        <Button
+                                          variant="outlined"
+                                          onClick={() =>
+                                            posicionSeleccionado !==
+                                              parseInt(cantidadCargos) &&
+                                            setPosicionSeleccionado(
+                                              posicionSeleccionado + 1
+                                            )
+                                          }
+                                          disabled={
+                                            posicionSeleccionado >=
+                                            parseInt(cantidadCargos)
+                                          }
+                                          size="small"
+                                        >
+                                          +
+                                        </Button>
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
+                              </span>
+                              {/* Checkbox */}
+                              <div
+                                style={{
+                                  display: "flex",
+                                  flexWrap: "wrap",
+                                  alignItems: "center",
+                                  justifyContent: "start",
+                                  gap: "20px",
+                                  width: "100%",
+                                }}
+                              >
+                                <div
+                                  className="col-md-5"
+                                  style={{
+                                    backgroundColor: deepPurple[50],
+                                    padding: "7.5px 10px",
+                                    borderRadius: 4,
+                                    width: 300,
+                                    marginTop: 15,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                  }}
+                                >
+                                  <FormControlLabel
+                                    control={
+                                      <Checkbox
+                                        sx={{
+                                          color: deepPurple[800],
+                                          "&.Mui-checked": {
+                                            color: deepPurple[600],
+                                          },
+                                        }}
+                                        onChange={handleDictamenDisidencia}
+                                        checked={dictamenDisidencia}
+                                      />
+                                    }
+                                    label={
+                                      <>
+                                        <span
+                                          style={{
+                                            display: "flex",
+                                            gap: 15,
+                                            fontSize: "14px",
+                                            alignItems: "center",
+                                          }}
+                                        >
+                                          Dictamen en disidencia
+                                          <SafetyDividerOutlinedIcon color="primary" />
+                                        </span>
+                                      </>
+                                    }
+                                  />
+                                </div>
+
+                                <div className="col-md-4">
+                                  <Button
+                                    sx={{
+                                      whiteSpace: "nowrap",
+                                    }}
+                                    onClick={handleAgregarSeleccionado}
+                                    variant="outlined"
+                                    type="button"
+                                    disabled={
+                                      parseInt(posicionSeleccionado) >=
+                                        parseInt(cantidadCargos) + 1 ||
+                                      (!dictamenDisidencia &&
+                                        seleccionadosAgregados.length >
+                                          cantidadCargos) ||
+                                      !cantidadCargos
+                                    }
+                                  >
+                                    {parseInt(posicionSeleccionado) >=
+                                      parseInt(cantidadCargos) + 1 ||
+                                    (!dictamenDisidencia &&
+                                      seleccionadosAgregados.length >
+                                        cantidadCargos) ? (
+                                      <>
+                                        <span className="mx-2" /> Cargos
+                                        cubiertos
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Add />
+                                        Agregar seleccionado
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Seleccionados Agregados */}
+
+                          {seleccionadosAgregados &&
+                            seleccionadosAgregados.length > 0 && (
+                              <div className="row">
+                                {Object.entries(juradosD).map(
+                                  ([key, value], i) => (
+                                    <div className="col-md" key={i}>
+                                      <div
+                                        style={{
+                                          marginTop: 15,
+                                          borderRadius: 4,
+                                          border: `1px solid ${deepPurple[600]} `,
+                                          padding: "10px",
+                                          overflowX: "auto",
+                                          display:
+                                            value[0].jurado === null
+                                              ? "flex"
+                                              : "block",
+                                        }}
+                                      >
+                                        <p className="text-center text-capitalize">
+                                          {value[0].jurado}
+                                        </p>
+
+                                        {value.map((el, i) => (
+                                          <Stack
+                                            key={i}
+                                            spacing={2}
+                                            style={{ padding: "5px 10px" }}
+                                          >
+                                            <Chip
+                                              label={
+                                                <span>
+                                                  {el.posicion}º -{" "}
+                                                  {capitalize(el.seleccionado)}
+                                                </span>
+                                              }
+                                              onDelete={() =>
+                                                handleDeleteSeleccionado(el)
+                                              }
+                                            />
+                                          </Stack>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )
+                                )}
+                              </div>
+                            )}
+                        </CardContent>
+                      </Card>
+
+                      {/* Sustanciado - Fecha de Sustanciado */}
+                      <Card
+                        variant="elevation"
+                        elevation={2}
+                        sx={{ maxWidth: 935 }}
                       >
-                        guardando...
-                      </LoadingButton>
-                    )}
-                  </Stack>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
+                        <CardContent>
+                          <div id="asignaturaForm">
+                            <div
+                              style={{
+                                border: "1px solid" + deepPurple[400],
+                                borderRadius: 4,
+                                padding: "15px",
+                                margin: 0,
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: "flex",
+                                  flexWrap: "wrap",
+                                  alignItems: "center",
+                                  justifyContent: "start",
+                                  gap: 30,
+                                  width: "100%",
+                                }}
+                              >
+                                <span className="d-flex align-items-top gap-3">
+                                  <div
+                                    className="col-md-6"
+                                    style={{
+                                      backgroundColor: deepPurple[50],
+                                      padding: "7.5px 10px",
+                                      borderRadius: 4,
+                                      minWidth: 300,
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "space-between",
+                                      width: "fit-content",
+                                    }}
+                                  >
+                                    <FormControlLabel
+                                      control={
+                                        <Checkbox
+                                          sx={{
+                                            color: deepPurple[800],
+                                            "&.Mui-checked": {
+                                              color: deepPurple[600],
+                                            },
+                                          }}
+                                          onChange={() =>
+                                            setMostrarFechaSustanciado(
+                                              !mostrarFechaSustanciado
+                                            )
+                                          }
+                                          checked={mostrarFechaSustanciado}
+                                        />
+                                      }
+                                      label={"Sustanciado"}
+                                    />
+                                  </div>
+                                  <FieldTooltip title="Corresponde a la fecha en que se archiva expediente del concurso." />
+                                </span>
+
+                                {/* Fecha de Sustanciado */}
+                                {mostrarFechaSustanciado && (
+                                  <div className="col-md-6">
+                                    <span className="d-flex align-items-top gap-3">
+                                      <Controller
+                                        name="fechaSustanciado"
+                                        control={control}
+                                        render={({
+                                          field: { onChange, ...restField },
+                                        }) => (
+                                          <LocalizationProvider
+                                            dateAdapter={AdapterDateFns}
+                                          >
+                                            <DesktopDatePicker
+                                              sx={{ minWidth: 300 }}
+                                              label="Fecha de Sustanciado"
+                                              onChange={(event) => {
+                                                onChange(event);
+                                                setFechaSustanciado(event);
+                                              }}
+                                              value={fechaSustanciado || ""}
+                                              {...restField}
+                                            />
+                                          </LocalizationProvider>
+                                        )}
+                                      />
+                                      <FieldTooltip title="Corresponde a la fecha en la que se sustanció el concurso." />
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <div className="row align-items-center justify-content-between d-flex gap-3 my-3">
+                        {/* Fecha de Pase a Archivo */}
+                        <div className="col-sm-12 col-md-6 col-lg-6 col-xl-4 d-flex flex-column gap-3">
+                          <span className="d-flex align-items-top gap-3">
+                            <Controller
+                              name="fechaPaseArchivo"
+                              control={control}
+                              render={({
+                                field: { onChange, ...restField },
+                              }) => (
+                                <LocalizationProvider
+                                  dateAdapter={AdapterDateFns}
+                                >
+                                  <DesktopDatePicker
+                                    sx={{ minWidth: 300 }}
+                                    label="Fecha de Pase a Archivo"
+                                    onChange={(event) => {
+                                      onChange(event);
+                                      setFechaPaseArchivo(event);
+                                    }}
+                                    value={fechaPaseArchivo || ""}
+                                    {...restField}
+                                  />
+                                </LocalizationProvider>
+                              )}
+                            />
+                            <FieldTooltip title="Corresponde a la fecha en que se archiva expediente del concurso." />
+                          </span>
+
+                          {/* OCA Designacion */}
+                          <SimpleInput
+                            label="OCA Designación Nº"
+                            placeholder="Ej: 1544/18"
+                            helperText={
+                              errors.ocaDesignacion &&
+                              "Ingrese un N° de Designación de OCA"
+                            }
+                            tooltip="Corresponde al N° de OCA, se ingresa como figura en la ordenanza. Ej: 2879/15"
+                            error={Boolean(errors.ocaDesignacion)}
+                            register={register}
+                            name="ocaDesignacion"
+                            required
+                          />
+                          {/* Interino  */}
+                          <SimpleInput
+                            label="Interino"
+                            tooltip="Corresponde completar cuado hay un interino."
+                            error={Boolean(errors.interino)}
+                            register={register}
+                            name="interino"
+                          />
+                        </div>
+
+                        {/* Fecha de Designación */}
+                        <div className="col-sm-12 col-md-6 col-lg-5 d-flex flex-column gap-3">
+                          <span className="d-flex align-items-top gap-3">
+                            <Controller
+                              name="fechaDesignacion"
+                              control={control}
+                              render={({
+                                field: { onChange, ...restField },
+                              }) => (
+                                <LocalizationProvider
+                                  dateAdapter={AdapterDateFns}
+                                >
+                                  <DesktopDatePicker
+                                    sx={{ minWidth: 300 }}
+                                    label="Fecha de Designación"
+                                    onChange={(event) => {
+                                      onChange(event);
+                                      setFechaDesignacion(event);
+                                    }}
+                                    value={fechaDesignacion || ""}
+                                    {...restField}
+                                  />
+                                </LocalizationProvider>
+                              )}
+                            />
+                            <FieldTooltip title="Corresponde a la fecha de la designación del docente." />
+                          </span>
+
+                          {/* Observaciones */}
+                          <span className="d-flex align-items-top gap-3">
+                            <TextareaAutosize
+                              className="textArea"
+                              placeholder="Observaciones"
+                              {...register("observaciones")}
+                              name="observaciones"
+                              style={{
+                                minWidth: 300,
+                                borderRadius: 4,
+                                borderColor: "#c4c4c4",
+                                padding: 15,
+                              }}
+                              minRows={4}
+                            />
+                            <FieldTooltip title="Corresponde a otros datos que se consideren necesarios." />
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Designados*/}
+                      <Card
+                        variant="elevation"
+                        elevation={2}
+                        sx={{ maxWidth: 935 }}
+                      >
+                        <CardContent>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 30,
+                              border: "1px solid" + deepPurple[400],
+                              borderRadius: 4,
+                              padding: "30px 15px",
+                            }}
+                          >
+                            <div className="row gap-3">
+                              <span className="d-flex">
+                                <div className="col-md-6">
+                                  <Controller
+                                    control={control}
+                                    name="designados"
+                                    defaultValue={postulantesData[0]}
+                                    render={({
+                                      field: { ref, onChange, ...field },
+                                    }) => (
+                                      <Autocomplete
+                                        disablePortal
+                                        defaultValue={null}
+                                        noOptionsText="Sin resultados"
+                                        options={postulantesData}
+                                        sx={{ width: 300 }}
+                                        isOptionEqualToValue={(option, value) =>
+                                          option.label === value.label
+                                        }
+                                        onChange={(_, data) =>
+                                          data && onChange(data.label)
+                                        }
+                                        renderInput={(params) => (
+                                          <TextField
+                                            {...params}
+                                            {...field}
+                                            inputRef={ref}
+                                            variant="outlined"
+                                            label="Designados"
+                                          />
+                                        )}
+                                      />
+                                    )}
+                                  />
+                                </div>
+                                <div className="col-md-4">
+                                  <div className="d-flex flex-column align-items-center">
+                                    <small htmlFor="">Orden de mérito </small>
+                                    <p>Nº {posicionDesignado}</p>
+                                  </div>
+                                </div>
+                              </span>
+                              <div className="row">
+                                <div className="col-md-4">
+                                  <Button
+                                    sx={{
+                                      whiteSpace: "nowrap",
+                                    }}
+                                    onClick={handleAgregarDesignado}
+                                    variant="outlined"
+                                    type="button"
+                                  >
+                                    <Add /> Agregar Designado
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Designados agregados */}
+                          {designadosAgregados &&
+                            designadosAgregados.length > 0 && (
+                              <ScrollContainer
+                                style={{
+                                  marginTop: 15,
+                                  padding: "10px 0",
+                                  borderRadius: 4,
+                                  border: `1px solid ${deepPurple[600]} `,
+                                }}
+                                className="scroll-container"
+                              >
+                                <Stack
+                                  spacing={2}
+                                  direction="row"
+                                  style={{ padding: "0 10px" }}
+                                >
+                                  {designadosAgregados.map((el, i) => (
+                                    <Chip
+                                      key={i}
+                                      label={`${el["posicion"]}º - ${capitalize(
+                                        el["designado"]
+                                      )} `}
+                                      onDelete={() => handleDeleteDesignado(el)}
+                                    />
+                                  ))}
+                                </Stack>
+                              </ScrollContainer>
+                            )}
+                        </CardContent>
+                      </Card>
+
+                      {/* Finalizar formulario */}
+                      {!isLoading ? (
+                        <Button
+                          sx={{ maxWidth: 935 }}
+                          startIcon={<Save />}
+                          variant="outlined"
+                          size="large"
+                          onClick={handleSubmit(handleFinalizarFormulario)}
+                        >
+                          Finalizar formulario
+                        </Button>
+                      ) : (
+                        <LoadingButton
+                          loading={isLoading}
+                          loadingPosition="start"
+                          startIcon={<Save />}
+                          variant="outlined"
+                          size="large"
+                          sx={{ backgroundColor: deepPurple[50] }}
+                        >
+                          guardando...
+                        </LoadingButton>
+                      )}
+                    </Stack>
+                  </form>
+                </CardContent>
+              </Card>
+            </Container>
+          </>
         </ThemeProvider>
       </LocalizationProvider>
     </>

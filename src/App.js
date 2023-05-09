@@ -116,12 +116,6 @@ function App() {
   const [designadosAgregados, setDesignadosAgregados] = useState([]);
 
   const [juradosAgregados, setJuradosAgregados] = useState([]);
-  //const [juradosDis, setJuradosDis] = useState([]);
-
-  const jurados = [
-    ...new Set(seleccionadosAgregados.map((item) => item.jurado)),
-  ];
-
   const [posicionSeleccionado, setPosicionSeleccionado] = useState(1);
   const [posicionDesignado, setPosicionDesignado] = useState(1);
 
@@ -304,10 +298,6 @@ function App() {
         confirmButtonText: "Volver",
       });
     }
-
-    console.log(
-      seleccionadosAgregados.filter((item) => item.jurado !== juradoDisidente)
-    );
 
     if (
       seleccionadosAgregados &&
@@ -509,7 +499,6 @@ function App() {
       id_cargo: parseInt(data.cargo),
       asignaturas: asignaturasAgregadas,
       cantidadCargos: parseInt(data.cantidadCargos),
-      fechaPublicacion: new Date(data.fechaPublicacion).toLocaleDateString(),
       expedienteLlamado: data.expedienteLlamado,
       dedicacion: {
         id: parseInt(data.dedicacion),
@@ -521,24 +510,25 @@ function App() {
       oca: data.oca,
       nup: data.NUP,
       ocaDesignacion: data.ocaDesignacion,
-      fechaCierre: new Date(data.fechaCierre),
+      fechaPublicacion: data.fechaPublicacion,
+      fechaCierre: data.fechaCierre,
+      fechaSustanciado: mostrarFechaSustanciado ? data.fechaSustanciado : null,
+      fechaDesignacion: data.fechaDesignacion,
+      fechaPaseArchivo: data.fechaPaseArchivo,
       expedienteConcurso: data.expedienteConcurso,
       interino: data.interino,
       postulantes: postulantesAgregados.map((item) => item),
       comisionAsesora: juradosAgregados.map((item) => item.jurado),
       seleccionados: seleccionadosAgregados,
-      sustanciado: mostrarFechaSustanciado,
-      fechaSustanciado: mostrarFechaSustanciado
-        ? new Date(data.fechaSustanciado).toLocaleDateString()
-        : null,
       recusaciones: data.recusaciones,
-      fechaPaseArchivo: new Date(data.fechaPaseArchivo).toLocaleDateString(),
-      fechaDesignacion: new Date(data.fechaDesignacion).toLocaleDateString(),
+      sustanciado: mostrarFechaSustanciado,
       observaciones: data.observaciones,
       disidencia: dictamenDisidencia,
       designados: designadosAgregados,
     };
+
     console.log("draft data: ", draft);
+
     await axios
       .post("http://localhost/concursos/API/save_concurso.php", draft)
       .then((response) => {
@@ -553,7 +543,7 @@ function App() {
       setAsignaturasAgregadas([]);
       setConExtension(false);
       reset({ data });
-    }, 70000); */
+    }, 8000); */
   };
 
   useEffect(() => {
@@ -869,6 +859,7 @@ function App() {
                                   dateAdapter={AdapterDateFns}
                                 >
                                   <DesktopDatePicker
+                                    format="dd/MM/yyyy"
                                     sx={{ minWidth: 300 }}
                                     label="Fecha de Publicación"
                                     onChange={(event) => {
@@ -978,6 +969,7 @@ function App() {
                                   dateAdapter={AdapterDateFns}
                                 >
                                   <DesktopDatePicker
+                                    format="dd/MM/yyyy"
                                     sx={{ minWidth: 300 }}
                                     label="Fecha de Cierre"
                                     onChange={(event) => {
@@ -1673,6 +1665,7 @@ function App() {
                                             dateAdapter={AdapterDateFns}
                                           >
                                             <DesktopDatePicker
+                                              format="dd/MM/yyyy"
                                               sx={{ minWidth: 300 }}
                                               label="Fecha de Sustanciado"
                                               onChange={(event) => {
@@ -1709,6 +1702,7 @@ function App() {
                                   dateAdapter={AdapterDateFns}
                                 >
                                   <DesktopDatePicker
+                                    format="dd/MM/yyyy"
                                     sx={{ minWidth: 300 }}
                                     label="Fecha de Pase a Archivo"
                                     onChange={(event) => {
@@ -1761,6 +1755,7 @@ function App() {
                                   dateAdapter={AdapterDateFns}
                                 >
                                   <DesktopDatePicker
+                                    format="dd/MM/yyyy"
                                     sx={{ minWidth: 300 }}
                                     label="Fecha de Designación"
                                     onChange={(event) => {

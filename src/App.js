@@ -495,11 +495,13 @@ function App() {
     const draft = {
       ordenPrelacion: parseInt(data.ordenPrelacion),
       departamento: {
-        id: parseInt(data.departamento.id) || null, //CREAR EN INPUT
+        id: parseInt(data.departamento.id) || null,
         label: data.departamento.label,
       },
-      //: parseInt(data.departamento), //agregar el label de cada depto, si es null va a agregar el id a la db
-      area: data.area, // lo mismo que dedicacion
+      area: {
+        id: parseInt(data.area.id) || null,
+        label: data.area.label, // AREA HAY QUE VER COMO LOS TRAE DE LA DB, ES UN SEARCH LIVE ASIQUE HAY QUE BUSCAR DE LA DB AL TIPEAR
+      },
       id_cargo: parseInt(data.cargo),
       asignaturas: asignaturasAgregadas,
       cantidadCargos: parseInt(data.cantidadCargos),
@@ -528,7 +530,7 @@ function App() {
       sustanciado: mostrarFechaSustanciado,
       observaciones: data.observaciones,
       disidencia: dictamenDisidencia,
-      // convenio: crear un select "" {id1 CCT} {id2 PROHUM} {id3 PRIDIUN}
+      convenio: parseInt(data.convenio),
       designados: designadosAgregados,
     };
 
@@ -548,16 +550,6 @@ function App() {
     } catch (error) {
       console.error(error);
     }
-    /* await axios
-      .post("http://localhost/concursos/API/save_concurso.php", draft)
-      .then((response) => {
-        console.log("response:", response);
-
-        setIsLoading(false);
-      })
-      .catch((error) => {
-        console.log(error);
-      });  */
 
     /* setTimeout(() => {
       localStorage.clear();
@@ -661,7 +653,10 @@ function App() {
                                   }
                                   onChange={(_, data) =>
                                     data &&
-                                    onChange(`${data.id} - ${data.label}`)
+                                    onChange({
+                                      id: parseInt(data.id) || null,
+                                      label: data.label,
+                                    })
                                   }
                                   renderInput={(params) => (
                                     <TextField
@@ -684,6 +679,7 @@ function App() {
                         </div>
 
                         {/* Area */}
+
                         <div className="col-sm-12 col-md-6 col-lg-5 d-flex flex-column gap-3">
                           <SimpleInput
                             label="Área"
@@ -962,19 +958,28 @@ function App() {
                                 )}
                               />
                             )}
+
                           {/* Convenio */}
-                          <SimpleInput
+                          <TextField
+                            select
+                            sx={{ minWidth: 300 }}
                             label="Convenio"
-                            helperText={
-                              errors.expedienteLlamado &&
-                              "Ingrese un N° de expediente"
-                            }
-                            tooltip="Corresponde al convenio"
-                            error={Boolean(errors.expedienteLlamado)}
-                            register={register}
-                            name="expedienteLlamado"
-                            required
-                          />
+                            defaultValue=""
+                            inputProps={register("convenio")}
+                            error={Boolean(errors.convenio)}
+                            helperText={errors.convenio?.message}
+                          >
+                            {[
+                              { label: "-", id: "0" },
+                              { label: "CCT", id: "1" },
+                              { label: "PROHUM", id: "2" },
+                              { label: "PRIDIUN", id: "3" },
+                            ].map((option) => (
+                              <MenuItem key={option.id} value={option.id}>
+                                {option.label}
+                              </MenuItem>
+                            ))}
+                          </TextField>
                         </div>
                         {/* OCA */}
                         <div className="col-sm-12 col-md-6 col-lg-5 d-flex flex-column gap-3">

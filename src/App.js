@@ -494,8 +494,12 @@ function App() {
 
     const draft = {
       ordenPrelacion: parseInt(data.ordenPrelacion),
-      id_departamento: parseInt(data.departamento),
-      area: data.area,
+      departamento: {
+        id: parseInt(data.departamento.id) || null, //CREAR EN INPUT
+        label: data.departamento.label,
+      },
+      //: parseInt(data.departamento), //agregar el label de cada depto, si es null va a agregar el id a la db
+      area: data.area, // lo mismo que dedicacion
       id_cargo: parseInt(data.cargo),
       asignaturas: asignaturasAgregadas,
       cantidadCargos: parseInt(data.cantidadCargos),
@@ -524,19 +528,36 @@ function App() {
       sustanciado: mostrarFechaSustanciado,
       observaciones: data.observaciones,
       disidencia: dictamenDisidencia,
+      // convenio: crear un select "" {id1 CCT} {id2 PROHUM} {id3 PRIDIUN}
       designados: designadosAgregados,
     };
 
-    console.log("draft data: ", draft);
+    try {
+      const response = await axios.post(
+        "http://localhost/concursos/API/save_concurso.php",
+        draft,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      console.log("response:", response);
 
-    await axios
+      setIsLoading(false);
+    } catch (error) {
+      console.error(error);
+    }
+    /* await axios
       .post("http://localhost/concursos/API/save_concurso.php", draft)
       .then((response) => {
+        console.log("response:", response);
+
         setIsLoading(false);
       })
       .catch((error) => {
         console.log(error);
-      });
+      });  */
 
     /* setTimeout(() => {
       localStorage.clear();
@@ -941,8 +962,20 @@ function App() {
                                 )}
                               />
                             )}
+                          {/* Convenio */}
+                          <SimpleInput
+                            label="Convenio"
+                            helperText={
+                              errors.expedienteLlamado &&
+                              "Ingrese un N° de expediente"
+                            }
+                            tooltip="Corresponde al convenio"
+                            error={Boolean(errors.expedienteLlamado)}
+                            register={register}
+                            name="expedienteLlamado"
+                            required
+                          />
                         </div>
-
                         {/* OCA */}
                         <div className="col-sm-12 col-md-6 col-lg-5 d-flex flex-column gap-3">
                           <SimpleInput
@@ -1270,6 +1303,7 @@ function App() {
                             required
                           />
                         </div>
+
                         {/* Recusaciones  */}
                         <div className="col-sm-12 col-md-6 col-lg-5 d-flex flex-column gap-3">
                           <SimpleInput
@@ -1282,7 +1316,6 @@ function App() {
                         </div>
                       </div>
 
-                      {/* Seleccionados */}
                       <Card
                         variant="elevation"
                         elevation={2}
@@ -1298,8 +1331,8 @@ function App() {
                                 margin: 0,
                               }}
                             >
-                              <span className="d-flex gap-3">
-                                {dictamenDisidencia && (
+                              {!dictamenDisidencia && (
+                                <span className="d-flex gap-3">
                                   <Controller
                                     control={control}
                                     name="juradoDisidente"
@@ -1310,7 +1343,7 @@ function App() {
                                       <Autocomplete
                                         disablePortal
                                         defaultValue={null}
-                                        noOptionsText="Sin reysultados"
+                                        noOptionsText="Sin resultados"
                                         options={juradosData}
                                         sx={{ width: 300 }}
                                         isOptionEqualToValue={(option, value) =>
@@ -1342,106 +1375,110 @@ function App() {
                                       />
                                     )}
                                   />
-                                )}
 
-                                <span className="d-flex align-items-top gap-3">
-                                  <Controller
-                                    control={control}
-                                    name="seleccionados"
-                                    defaultValue={postulantesData[0]}
-                                    render={({
-                                      field: { ref, onChange, ...field },
-                                    }) => (
-                                      <Autocomplete
-                                        disablePortal
-                                        defaultValue={null}
-                                        noOptionsText="Sin resultados"
-                                        options={postulantesData}
-                                        sx={{ width: 300 }}
-                                        isOptionEqualToValue={(option, value) =>
-                                          option.label === value.label
-                                        }
-                                        onChange={(_, data) =>
-                                          data && onChange(data.label)
-                                        }
-                                        renderInput={(params) => (
-                                          <TextField
-                                            {...params}
-                                            {...field}
-                                            inputRef={ref}
-                                            required
-                                            error={Boolean(
-                                              errors.seleccionados
+                                  <>
+                                    <span className="d-flex align-items-top gap-3">
+                                      <Controller
+                                        control={control}
+                                        name="seleccionados"
+                                        defaultValue={postulantesData[0]}
+                                        render={({
+                                          field: { ref, onChange, ...field },
+                                        }) => (
+                                          <Autocomplete
+                                            disablePortal
+                                            defaultValue={null}
+                                            noOptionsText="Sin resultados"
+                                            options={postulantesData}
+                                            sx={{ width: 300 }}
+                                            isOptionEqualToValue={(
+                                              option,
+                                              value
+                                            ) => option.label === value.label}
+                                            onChange={(_, data) =>
+                                              data && onChange(data.label)
+                                            }
+                                            renderInput={(params) => (
+                                              <TextField
+                                                {...params}
+                                                {...field}
+                                                inputRef={ref}
+                                                required
+                                                error={Boolean(
+                                                  errors.seleccionados
+                                                )}
+                                                InputLabelProps={{
+                                                  required: false,
+                                                }}
+                                                variant="outlined"
+                                                label="Seleccionados"
+                                              />
                                             )}
-                                            InputLabelProps={{
-                                              required: false,
-                                            }}
-                                            variant="outlined"
-                                            label="Seleccionados"
                                           />
                                         )}
                                       />
-                                    )}
-                                  />
-                                  <FieldTooltip title="Corresponde a los candidatos seleccionados. El orden de mérito debe respetarse en la lista, el primero corresponde al primer orden, el segundo al siguiente y así sucesivamente" />
-                                </span>
+                                      <FieldTooltip title="Corresponde a los candidatos seleccionados. El orden de mérito debe respetarse en la lista, el primero corresponde al primer orden, el segundo al siguiente y así sucesivamente" />
+                                    </span>
 
-                                <div className="text-center">
-                                  {!cantidadCargos ? (
-                                    <p className="pt-3 text-muted">
-                                      Ingrese la cantidad de cargos
-                                    </p>
-                                  ) : (
-                                    <>
-                                      <small>Orden de mérito</small>
-
-                                      <span className="d-flex align-items-center justify-content-between gap-2">
-                                        <Button
-                                          variant="outlined"
-                                          onClick={() =>
-                                            posicionSeleccionado >= 1 &&
-                                            setPosicionSeleccionado(
-                                              posicionSeleccionado - 1
-                                            )
-                                          }
-                                          disabled={
-                                            posicionSeleccionado === 1 ||
-                                            seleccionadosAgregados.length >=
-                                              parseInt(cantidadCargos)
-                                          }
-                                          size="small"
-                                        >
-                                          -
-                                        </Button>
-
-                                        <p style={{ whiteSpace: "nowrap" }}>
-                                          Nº{" "}
-                                          {posicionSeleccionado > cantidadCargos
-                                            ? cantidadCargos
-                                            : posicionSeleccionado}
+                                    <div className="text-center">
+                                      {!cantidadCargos ? (
+                                        <p className="pt-3 text-muted">
+                                          Ingrese la cantidad de cargos
                                         </p>
-                                        <Button
-                                          variant="outlined"
-                                          onClick={() =>
-                                            posicionSeleccionado !==
-                                              parseInt(cantidadCargos) &&
-                                            setPosicionSeleccionado(
-                                              posicionSeleccionado + 1
-                                            )
-                                          }
-                                          disabled={
-                                            posicionSeleccionado >=
-                                            parseInt(cantidadCargos)
-                                          }
-                                          size="small"
-                                        >
-                                          +
-                                        </Button>
-                                      </span>
-                                    </>
-                                  )}
-                                </div>
-                              </span>
+                                      ) : (
+                                        <>
+                                          <small>Orden de mérito</small>
+
+                                          <span className="d-flex align-items-center justify-content-between gap-2">
+                                            <Button
+                                              variant="outlined"
+                                              onClick={() =>
+                                                posicionSeleccionado >= 1 &&
+                                                setPosicionSeleccionado(
+                                                  posicionSeleccionado - 1
+                                                )
+                                              }
+                                              disabled={
+                                                posicionSeleccionado === 1 ||
+                                                seleccionadosAgregados.length >=
+                                                  parseInt(cantidadCargos)
+                                              }
+                                              size="small"
+                                            >
+                                              -
+                                            </Button>
+
+                                            <p style={{ whiteSpace: "nowrap" }}>
+                                              Nº{" "}
+                                              {posicionSeleccionado >
+                                              cantidadCargos
+                                                ? cantidadCargos
+                                                : posicionSeleccionado}
+                                            </p>
+                                            <Button
+                                              variant="outlined"
+                                              onClick={() =>
+                                                posicionSeleccionado !==
+                                                  parseInt(cantidadCargos) &&
+                                                setPosicionSeleccionado(
+                                                  posicionSeleccionado + 1
+                                                )
+                                              }
+                                              disabled={
+                                                posicionSeleccionado >=
+                                                parseInt(cantidadCargos)
+                                              }
+                                              size="small"
+                                            >
+                                              +
+                                            </Button>
+                                          </span>
+                                        </>
+                                      )}
+                                    </div>
+                                  </>
+                                </span>
+                              )}
                               {/* Checkbox */}
                               <div
                                 style={{
@@ -1498,38 +1535,40 @@ function App() {
                                 </div>
 
                                 <div className="col-md-4">
-                                  <Button
-                                    sx={{
-                                      whiteSpace: "nowrap",
-                                    }}
-                                    onClick={handleAgregarSeleccionado}
-                                    variant="outlined"
-                                    type="button"
-                                    disabled={
-                                      parseInt(posicionSeleccionado) >=
+                                  {!dictamenDisidencia && (
+                                    <Button
+                                      sx={{
+                                        whiteSpace: "nowrap",
+                                      }}
+                                      onClick={handleAgregarSeleccionado}
+                                      variant="outlined"
+                                      type="button"
+                                      disabled={
+                                        parseInt(posicionSeleccionado) >=
+                                          parseInt(cantidadCargos) + 1 ||
+                                        (!dictamenDisidencia &&
+                                          seleccionadosAgregados.length >
+                                            cantidadCargos) ||
+                                        !cantidadCargos
+                                      }
+                                    >
+                                      {parseInt(posicionSeleccionado) >=
                                         parseInt(cantidadCargos) + 1 ||
                                       (!dictamenDisidencia &&
                                         seleccionadosAgregados.length >
-                                          cantidadCargos) ||
-                                      !cantidadCargos
-                                    }
-                                  >
-                                    {parseInt(posicionSeleccionado) >=
-                                      parseInt(cantidadCargos) + 1 ||
-                                    (!dictamenDisidencia &&
-                                      seleccionadosAgregados.length >
-                                        cantidadCargos) ? (
-                                      <>
-                                        <span className="mx-2" /> Cargos
-                                        cubiertos
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Add />
-                                        Agregar seleccionado
-                                      </>
-                                    )}
-                                  </Button>
+                                          cantidadCargos) ? (
+                                        <>
+                                          <span className="mx-2" /> Cargos
+                                          cubiertos
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Add />
+                                          Agregar seleccionado
+                                        </>
+                                      )}
+                                    </Button>
+                                  )}
                                 </div>
                               </div>
                             </div>
